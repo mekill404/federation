@@ -2,16 +2,21 @@ openapi: 3.0.0
 info:
   title: API Activités
   version: 1.0.0
-  description: Gestion des activités et présences
-
-servers:
-  - url: http://localhost:3000/api
-    description: API de gestion des activités
 
 paths:
   /activites:
+    get:
+      summary: Lister les activités (Réunions, AG, Formations)
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Activite'
     post:
-      summary: Créer une nouvelle activité
+      summary: Créer une activité
       requestBody:
         required: true
         content:
@@ -20,207 +25,60 @@ paths:
               $ref: '#/components/schemas/ActiviteCreation'
       responses:
         '201':
-          description: Activité créée
-        '400':
-          description: Données invalides
-    get:
-      summary: Lister toutes les activités
-      responses:
-        '200':
-          description: Liste des activités
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Activite'
-  /activites/{id}:
-    get:
-      summary: Obtenir les détails d'une activité
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Détails de l'activité
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Activite'
-        '404':
-          description: Activité non trouvée
-    put:
-      summary: Mettre à jour une activité
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ActiviteUpdate'
-      responses:
-        '200':
-          description: Activité mise à jour
-        '404':
-          description: Activité non trouvée
-    delete:
-      summary: Supprimer une activité
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Activité supprimée
-        '404':
-          description: Activité non trouvée
+          description: Créée
   /activites/{id}/presences:
-    post:
-      summary: Enregistrer une présence
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Presence'
-      responses:
-        '201':
-          description: Présence enregistrée
-        '400':
-          description: Données invalides
     get:
-      summary: Lister les présences d'une activité
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
+      summary: Liste de présence pour une activité
       responses:
         '200':
-          description: Liste des présences
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/Presence'
-  /collectivites/{id}/activites:
-    get:
-      summary: Lister les activités d'une collectivité
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
+    post:
+      summary: Enregistrer des présences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/PresenceRecord'
       responses:
         '200':
-          description: Liste des activités
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Activite'
+          description: Pointage effectué
 
 components:
   schemas:
     ActiviteCreation:
       type: object
-      required:
-        - nom
-        - date
-        - collectivite_id
-        - type
-        - obligatoire
+      required: [nom, date, type, entite_id]
       properties:
-        nom:
-          type: string
-        date:
-          type: string
-          format: date
-        collectivite_id:
-          type: integer
-          description: ID de la collectivité ou null pour fédération
-        type:
-          type: string
-          enum: [assemblée générale mensuelle, formation juniors, exceptionnelle, fédération]
-        obligatoire:
-          type: boolean
-        description:
-          type: string
-        membres_cibles:
-          type: array
-          items:
-            type: integer
-            description: IDs des membres ciblés si non obligatoire pour tous
+        nom: { type: string }
+        date: { type: string, format: date-time }
+        type: { type: string, enum: [AG_MENSUELLE, FORMATION, EXCEPTIONNELLE] }
+        entite_id: { type: integer }
+        obligatoire: { type: boolean, default: true }
     Activite:
+      allOf:
+        - $ref: '#/components/schemas/ActiviteCreation'
+        - type: object
+          properties:
+            id: { type: integer }
+    PresenceRecord:
       type: object
+      required: [membre_id, statut]
       properties:
-        id:
-          type: integer
-        nom:
-          type: string
-        date:
-          type: string
-          format: date
-        collectivite_id:
-          type: integer
-        type:
-          type: string
-        obligatoire:
-          type: boolean
-        description:
-          type: string
-        membres_cibles:
-          type: array
-          items:
-            type: integer
-    ActiviteUpdate:
-      type: object
-      properties:
-        nom:
-          type: string
-        date:
-          type: string
-        obligatoire:
-          type: boolean
-        description:
-          type: string
+        membre_id: { type: integer }
+        statut: { type: string, enum: [PRESENT, ABSENT, EXCUSE] }
+        motif: { type: string }
     Presence:
-      type: object
-      required:
-        - membre_id
-        - present
-      properties:
-        id:
-          type: integer
-        activite_id:
-          type: integer
-        membre_id:
-          type: integer
-        present:
-          type: boolean
-        excuse:
-          type: string
-          description: Motif d'absence si excusé
-        collectivite_visitee:
-          type: integer
-          description: ID de la collectivité visitée si membre d'une autre</content>
+      allOf:
+        - $ref: '#/components/schemas/PresenceRecord'
+        - type: object
+          properties:
+            id: { type: integer }
+            activite_id: { type: integer }
