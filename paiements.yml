@@ -1,0 +1,128 @@
+openapi: 3.0.0
+info:
+  title: API Paiements et Cotisations
+  version: 1.0.0
+  description: Gestion des cotisations et paiements
+
+servers:
+  - url: http://localhost:3000/api
+    description: API de gestion des paiements
+
+paths:
+  /paiements:
+    post:
+      summary: Enregistrer un paiement de cotisation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Paiement'
+      responses:
+        '201':
+          description: Paiement enregistré
+        '400':
+          description: Données invalides
+    get:
+      summary: Lister tous les paiements
+      responses:
+        '200':
+          description: Liste des paiements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Paiement'
+  /paiements/{id}:
+    get:
+      summary: Obtenir les détails d'un paiement
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Détails du paiement
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Paiement'
+        '404':
+          description: Paiement non trouvé
+  /collectivites/{id}/paiements:
+    get:
+      summary: Lister les paiements d'une collectivité
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Liste des paiements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Paiement'
+  /membres/{id}/paiements:
+    get:
+      summary: Lister les paiements d'un membre
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Liste des paiements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Paiement'
+
+components:
+  schemas:
+    Paiement:
+      type: object
+      required:
+        - membre_id
+        - collectivite_id
+        - montant
+        - date_paiement
+        - mode_paiement
+        - type_cotisation
+      properties:
+        id:
+          type: integer
+        membre_id:
+          type: integer
+        collectivite_id:
+          type: integer
+        montant:
+          type: number
+          description: Montant en MGA
+        date_paiement:
+          type: string
+          format: date
+        mode_paiement:
+          type: string
+          enum: [espèce, virement bancaire, mobile money]
+        type_cotisation:
+          type: string
+          enum: [mensuelle, annuelle, ponctuelle]
+        description:
+          type: string
+          description: Description pour cotisations ponctuelles
+        reversement_federation:
+          type: number
+          description: Pourcentage reversé à la fédération</content>
+<parameter name="filePath">/home/mekill404/Documents/PROJET/hei/federation/paiements.yml

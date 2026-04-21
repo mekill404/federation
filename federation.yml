@@ -1,0 +1,200 @@
+openapi: 3.0.0
+info:
+  title: API Fédération Agricole
+  version: 1.0.0
+  description: Gestion de la fédération agricole
+
+servers:
+  - url: http://localhost:3000/api
+    description: API de la fédération agricole
+
+paths:
+  /federation/direction:
+    get:
+      summary: Obtenir la direction de la fédération
+      responses:
+        '200':
+          description: Détails de la direction
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DirectionFederation'
+    put:
+      summary: Mettre à jour la direction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DirectionFederationUpdate'
+      responses:
+        '200':
+          description: Direction mise à jour
+  /federation/rapports:
+    post:
+      summary: Soumettre un rapport mensuel d'une collectivité
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RapportMensuel'
+      responses:
+        '201':
+          description: Rapport soumis
+        '400':
+          description: Données invalides
+    get:
+      summary: Lister les rapports
+      responses:
+        '200':
+          description: Liste des rapports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RapportMensuel'
+  /federation/activites:
+    get:
+      summary: Lister les activités fédérales
+      responses:
+        '200':
+          description: Liste des activités fédérales
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ActiviteFederale'
+
+components:
+  schemas:
+    DirectionFederation:
+      type: object
+      properties:
+        president:
+          $ref: '#/components/schemas/MembreFederation'
+        president_adjoint:
+          $ref: '#/components/schemas/MembreFederation'
+        tresorier:
+          $ref: '#/components/schemas/MembreFederation'
+        secretaire:
+          $ref: '#/components/schemas/MembreFederation'
+        mandat_debut:
+          type: string
+          format: date
+        mandat_fin:
+          type: string
+          format: date
+    MembreFederation:
+      type: object
+      properties:
+        id:
+          type: integer
+        nom:
+          type: string
+        prenoms:
+          type: string
+        poste_precedent:
+          type: string
+          description: Poste dans une collectivité (président requis)
+        mandats:
+          type: array
+          items:
+            type: object
+            properties:
+              poste:
+                type: string
+              annee_debut:
+                type: integer
+              annee_fin:
+                type: integer
+    DirectionFederationUpdate:
+      type: object
+      properties:
+        president_id:
+          type: integer
+        president_adjoint_id:
+          type: integer
+        tresorier_id:
+          type: integer
+        secretaire_id:
+          type: integer
+        mandat_debut:
+          type: string
+          format: date
+        mandat_fin:
+          type: string
+          format: date
+    RapportMensuel:
+      type: object
+      required:
+        - collectivite_id
+        - mois
+        - annee
+        - nombre_membres
+        - taux_assiduite
+      properties:
+        collectivite_id:
+          type: integer
+        mois:
+          type: integer
+          minimum: 1
+          maximum: 12
+        annee:
+          type: integer
+        nombre_membres:
+          type: integer
+        taux_assiduite:
+          type: number
+          format: float
+    ActiviteFederale:
+      type: object
+      properties:
+        id:
+          type: integer
+        nom:
+          type: string
+        date:
+          type: string
+          format: date
+        type:
+          type: string
+          enum: [assemblée générale annuelle, formation, autre]
+        obligatoire:
+          type: boolean
+        description:
+          type: string
+      '404':
+        description: Membre non trouvé
+  /membres/{id}/parrain:
+  get:
+    summary: Obtenir les détails du parrain d'un membre
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+    responses:
+      '200':
+        description: Détails du parrain
+      '404':
+        description: Membre ou parrain non trouvé
+  
+  /membres/{id}/delete:
+  delete:
+    summary: Supprimer un membre
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+    responses:
+      '200':
+        description: Membre supprimé
+      '404':
+        description: Membre non trouvé
+    

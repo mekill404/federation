@@ -1,0 +1,321 @@
+openapi: 3.0.0
+info:
+  title: API Collectivités Agricoles
+  version: 1.0.0
+  description: Gestion des collectivités agricoles
+
+servers:
+  - url: http://localhost:3000/api
+    description: API de gestion des collectivités agricoles
+
+paths:
+  /collectivites:
+    post:
+      summary: Créer une nouvelle collectivité
+      description: Ouverture d’une nouvelle collectivité avec validation des conditions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectiviteCreation'
+      responses:
+        '201':
+          description: Collectivité créée avec succès
+        '400':
+          description: Conditions non remplies ou données invalides
+    get:
+      summary: Lister toutes les collectivités
+      responses:
+        '200':
+          description: Liste des collectivités
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Collectivite'
+  /collectivites/{id}:
+    get:
+      summary: Obtenir les détails d'une collectivité
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Détails de la collectivité
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collectivite'
+        '404':
+          description: Collectivité non trouvée
+    put:
+      summary: Mettre à jour une collectivité
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectiviteUpdate'
+      responses:
+        '200':
+          description: Collectivité mise à jour
+        '404':
+          description: Collectivité non trouvée
+    delete:
+      summary: Supprimer une collectivité
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Collectivité supprimée
+        '404':
+          description: Collectivité non trouvée
+  /collectivites/{id}/membres:
+    post:
+      summary: Admettre un nouveau membre dans une collectivité
+      description: Admission d’un nouveau membre avec validation des conditions
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MembreAdmission'
+      responses:
+        '201':
+          description: Membre admis avec succès
+        '400':
+          description: Conditions non remplies ou données invalides
+    get:
+      summary: Lister les membres d'une collectivité
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Liste des membres
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Membre'
+  /collectivites/{id}/statistiques:
+    get:
+      summary: Obtenir les statistiques d'une collectivité
+      description: Rapport mensuel avec taux d’assiduité et nombre de membres
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: periode
+          in: query
+          schema:
+            type: string
+            format: date
+            description: Période pour les statistiques (YYYY-MM)
+      responses:
+        '200':
+          description: Statistiques de la collectivité
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatistiquesCollectivite'
+
+components:
+  schemas:
+    CollectiviteCreation:
+      type: object
+      required:
+        - nom
+        - specialite
+        - localite
+        - membres
+        - postes_specifiques
+        - autorisation_federation
+      properties:
+        nom:
+          type: string
+          description: Nom unique de la collectivité
+        specialite:
+          type: string
+          description: Spécialité agricole
+        localite:
+          type: string
+          description: Ville ou localité
+        membres:
+          type: array
+          minItems: 10
+          description: Liste des membres inscrits
+          items:
+            type: object
+            required:
+              - id_personne
+              - date_inscription
+              - anciennete_mois
+            properties:
+              id_personne:
+                type: integer
+              date_inscription:
+                type: string
+                format: date
+              anciennete_mois:
+                type: integer
+                minimum: 6
+        postes_specifiques:
+          type: array
+          description: Postes occupés (président, etc.)
+          items:
+            type: string
+            enum: [président, président adjoint, trésorier, secrétaire]
+        autorisation_federation:
+          type: boolean
+          description: Autorisation de la fédération
+    Collectivite:
+      type: object
+      properties:
+        id:
+          type: integer
+        nom:
+          type: string
+        specialite:
+          type: string
+        localite:
+          type: string
+        date_creation:
+          type: string
+          format: date
+        membres:
+          type: array
+          items:
+            $ref: '#/components/schemas/Membre'
+    CollectiviteUpdate:
+      type: object
+      properties:
+        nom:
+          type: string
+        specialite:
+          type: string
+        localite:
+          type: string
+    MembreAdmission:
+      type: object
+      required:
+        - nom
+        - prenoms
+        - date_naissance
+        - genre
+        - adresse
+        - metier
+        - telephone
+        - email
+        - parrain_id
+        - frais_adhesion
+      properties:
+        nom:
+          type: string
+        prenoms:
+          type: string
+        date_naissance:
+          type: string
+          format: date
+        genre:
+          type: string
+          enum: [féminin, masculin]
+        adresse:
+          type: string
+        metier:
+          type: string
+        telephone:
+          type: string
+        email:
+          type: string
+          format: email
+        parrain_id:
+          type: integer
+          description: ID du parrain (membre confirmé avec ancienneté >90 jours)
+        frais_adhesion:
+          type: number
+          description: Montant payé (50.000 MGA)
+    Membre:
+      type: object
+      properties:
+        id:
+          type: integer
+        nom:
+          type: string
+        prenoms:
+          type: string
+        date_naissance:
+          type: string
+          format: date
+        genre:
+          type: string
+        adresse:
+          type: string
+        metier:
+          type: string
+        telephone:
+          type: string
+        email:
+          type: string
+        date_adhesion:
+          type: string
+          format: date
+        poste:
+          type: string
+          enum: [président, président adjoint, trésorier, secrétaire, membre confirmé, membre junior]
+        collectivite_id:
+          type: integer
+    StatistiquesCollectivite:
+      type: object
+      properties:
+        collectivite_id:
+          type: integer
+        nombre_membres:
+          type: integer
+        taux_assiduite_globale:
+          type: number
+          format: float
+        periode:
+          type: string
+          format: date
+        membres_statistiques:
+          type: array
+          items:
+            type: object
+            properties:
+              membre_id:
+                type: integer
+              taux_assiduite:
+                type: number
+              montant_encaisse:
+                type: number
+              montant_impaye:
+                type: number</content>
+<parameter name="filePath">/home/mekill404/Documents/PROJET/hei/federation/collectivites.yml

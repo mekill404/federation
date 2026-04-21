@@ -1,0 +1,188 @@
+openapi: 3.0.0
+info:
+  title: API Membres
+  version: 1.0.0
+  description: Gestion des membres des collectivités
+
+servers:
+  - url: http://localhost:3000/api
+    description: API de gestion des membres
+
+paths:
+  /membres:
+    get:
+      summary: Lister tous les membres
+      responses:
+        '200':
+          description: Liste des membres
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Membre'
+  /membres/{id}:
+    get:
+      summary: Obtenir les détails d'un membre
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Détails du membre
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Membre'
+        '404':
+          description: Membre non trouvé
+    put:
+      summary: Mettre à jour un membre
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MembreUpdate'
+      responses:
+        '200':
+          description: Membre mis à jour
+        '404':
+          description: Membre non trouvé
+    delete:
+      summary: Supprimer un membre (démission)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Membre supprimé
+        '404':
+          description: Membre non trouvé
+  /membres/{id}/changer-collectivite:
+    post:
+      summary: Changer de collectivité
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - nouvelle_collectivite_id
+              properties:
+                nouvelle_collectivite_id:
+                  type: integer
+      responses:
+        '200':
+          description: Collectivité changée
+        '404':
+          description: Membre ou collectivité non trouvée
+  /membres/{id}/assiduite:
+    get:
+      summary: Obtenir l'assiduité d'un membre
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: periode
+          in: query
+          schema:
+            type: string
+            format: date
+            description: Période (YYYY-MM)
+      responses:
+        '200':
+          description: Taux d'assiduité
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  membre_id:
+                    type: integer
+                  taux_assiduite:
+                    type: number
+                  periode:
+                    type: string
+
+components:
+  schemas:
+    Membre:
+      type: object
+      properties:
+        id:
+          type: integer
+        nom:
+          type: string
+        prenoms:
+          type: string
+        date_naissance:
+          type: string
+          format: date
+        genre:
+          type: string
+          enum: [féminin, masculin]
+        adresse:
+          type: string
+        metier:
+          type: string
+        telephone:
+          type: string
+        email:
+          type: string
+        date_adhesion:
+          type: string
+          format: date
+        poste:
+          type: string
+          enum: [président, président adjoint, trésorier, secrétaire, membre confirmé, membre junior]
+        collectivite_id:
+          type: integer
+        mandats:
+          type: array
+          items:
+            type: object
+            properties:
+              poste:
+                type: string
+              annee:
+                type: integer
+    MembreUpdate:
+      type: object
+      properties:
+        nom:
+          type: string
+        prenoms:
+          type: string
+        adresse:
+          type: string
+        metier:
+          type: string
+        telephone:
+          type: string
+        email:
+          type: string
+        poste:
+          type: string</content>
+<parameter name="filePath">/home/mekill404/Documents/PROJET/hei/federation/membres.yml
