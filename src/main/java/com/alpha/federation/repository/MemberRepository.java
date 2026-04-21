@@ -1,31 +1,32 @@
 package com.alpha.federation.repository;
 
 import com.alpha.federation.DBConnection.DBConnection;
-import com.alpha.federation.model.Member;
+import com.alpha.federation.model.MemberEntity;
 import com.alpha.federation.model.enums.Gender;
 import com.alpha.federation.model.enums.Occupation;
-
 import org.springframework.stereotype.Repository;
-
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Repository
 public class MemberRepository {
 
+    /*all message in english */
     private final DBConnection dbConnection;
 
     public MemberRepository(DBConnection dbConnection) {
         this.dbConnection = dbConnection;
     }
 
-    public void save(Member member) {
-        String sql = "INSERT INTO members (id, first_name, last_name, birth_date, gender, address, profession, phone_number, email, occupation) " +
-                     "VALUES (?, ?, ?, ?, ?::gender, ?, ?, ?, ?, ?::member_occupation)";
+    public MemberEntity save(MemberEntity member) {
+        String sql = "INSERT INTO members (id, first_name, last_name, birth_date, gender, address, profession, phone_number, email, occupation, created_at) " +
+                     "VALUES (?, ?, ?, ?, ?::gender, ?, ?, ?, ?, ?::member_occupation, ?)";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            member.setId(UUID.randomUUID().toString());
             pstmt.setString(1, member.getId());
             pstmt.setString(2, member.getFirstName());
             pstmt.setString(3, member.getLastName());
@@ -36,7 +37,9 @@ public class MemberRepository {
             pstmt.setString(8, member.getPhoneNumber());
             pstmt.setString(9, member.getEmail());
             pstmt.setString(10, member.getOccupation().name());
+            pstmt.setDate(11, Date.valueOf(LocalDate.now()));
             pstmt.executeUpdate();
+            return member;
         } catch (SQLException e) {
             throw new RuntimeException("Error saving member: " + e.getMessage());
         }
@@ -57,7 +60,7 @@ public class MemberRepository {
         }
     }
 
-    public Member findById(String id) {
+    public MemberEntity findById(String id) {
         String sql = "SELECT * FROM members WHERE id = ?";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -73,8 +76,8 @@ public class MemberRepository {
         return null;
     }
 
-    public List<Member> findReferees(String candidateId) {
-        List<Member> referees = new ArrayList<>();
+    public List<MemberEntity> findReferees(String candidateId) {
+        List<MemberEntity> referees = new ArrayList<>();
         String sql = "SELECT m.* FROM members m JOIN referees r ON m.id = r.referee_id WHERE r.candidate_id = ?";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -101,13 +104,13 @@ public class MemberRepository {
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error getting adhesion date: " + e.getMessage());
+            throw new RuntimeException("Error getting membership date: " + e.getMessage());
         }
         return null;
     }
 
-    public Member mapRow(ResultSet rs) throws SQLException {
-        Member m = new Member();
+    public MemberEntity mapRow(ResultSet rs) throws SQLException {
+        MemberEntity m = new MemberEntity();
         m.setId(rs.getString("id"));
         m.setFirstName(rs.getString("first_name"));
         m.setLastName(rs.getString("last_name"));
@@ -118,6 +121,7 @@ public class MemberRepository {
         m.setPhoneNumber(rs.getString("phone_number"));
         m.setEmail(rs.getString("email"));
         m.setOccupation(Occupation.valueOf(rs.getString("occupation")));
+        m.setCreatedAt(rs.getDate("created_at").toLocalDate());
         return m;
     }
 }
