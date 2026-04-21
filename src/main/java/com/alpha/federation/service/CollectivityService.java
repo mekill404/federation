@@ -2,13 +2,14 @@ package com.alpha.federation.service;
 
 import com.alpha.federation.model.Collectivity;
 import com.alpha.federation.repository.CollectivityRepository;
+import com.alpha.federation.repository.MemberRepository;
 import org.springframework.stereotype.Service;
 
 
 @Service
 public class CollectivityService {
     private final CollectivityRepository collectivityRepository;
-    private final MemberRepository memberRepository; // Pour vérifier que les dirigeants existent
+    private final MemberRepository memberRepository;
 
     public CollectivityService(CollectivityRepository collectivityRepository, MemberRepository memberRepository) {
         this.collectivityRepository = collectivityRepository;
@@ -16,7 +17,7 @@ public class CollectivityService {
     }
 
     public Collectivity createCollectivity(Collectivity col) {
-        // Règle de gestion : Une collectivité doit être approuvée
+
         if (!col.isFederationApproval()) {
             throw new RuntimeException("Une collectivité doit avoir l'approbation de la fédération.");
         }

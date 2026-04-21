@@ -1,11 +1,14 @@
 package com.alpha.federation.DBConnection;
 
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-
+@Configuration
 public class DBConnection {
-
+@Bean
     public Connection getConnection() {
         try {
             String jdbcURl = System.getProperty("DB_URL");
