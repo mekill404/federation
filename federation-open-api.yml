@@ -1,0 +1,179 @@
+openapi: 3.0.0
+info:
+  title: API Fédération des Collectivités Agricoles de Madagascar
+  version: 1.2.0
+  description: |
+    Spécification consolidée pour la gestion de la fédération.
+
+servers:
+  - url: http://localhost:3000/api
+    description: Serveur de développement
+
+paths:
+  /collectivites:
+    get:
+      summary: Lister les collectivités
+      tags: [Collectivités]
+      responses:
+        '200':
+          description: Liste des collectivités
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Collectivite'
+    post:
+      summary: Créer une collectivité
+      tags: [Collectivités]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CollectiviteCreation'
+      responses:
+        '201':
+          description: Collectivité créée
+
+  /membres/admission:
+    post:
+      summary: Admission d'un nouveau membre (B-2)
+      description: Nécessite 2 parrains et le paiement (50.000 Ar + cotisation annuelle de 200.000 Ar).
+      tags: [Membres]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdmissionCandidat'
+      responses:
+        '201':
+          description: Candidat admis
+        '403':
+          description: Conditions non remplies (parrains ou paiement)
+
+  /comptes:
+    post:
+      summary: Créer un compte (Bancaire, Mobile ou Caisse)
+      tags: [Trésorerie]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompteCreation'
+      responses:
+        '201':
+          description: Compte créé
+
+  /activites/{id}/presences:
+    post:
+      summary: Enregistrer les présences pour une activité
+      tags: [Activités]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/PresenceRecord'
+      responses:
+        '200':
+          description: Pointage effectué
+
+  /federation/statistiques/rapport-global:
+    get:
+      summary: Rapport Global Mensuel/Annuel (H)
+      description: Recensement des données consolidées pour l'Assemblée Générale.
+      tags: [Fédération]
+      parameters:
+        - name: periode_debut
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: periode_fin
+          in: query
+          required: true
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Statistiques de toutes les collectivités
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RapportCollectivite'
+
+components:
+  schemas:
+    CollectiviteCreation:
+      type: object
+      required: [numero_unique, nom_unique, specialite, ville_id]
+      properties:
+        numero_unique: { type: string }
+        nom_unique: { type: string }
+        specialite: { type: string }
+        ville_id: { type: integer }
+
+    Collectivite:
+      allOf:
+        - $ref: '#/components/schemas/CollectiviteCreation'
+        - type: object
+          properties:
+            id: { type: integer }
+            date_creation: { type: string, format: date }
+
+    AdmissionCandidat:
+      type: object
+      required: [nom, prenoms, parrains, paiement_initial]
+      properties:
+        nom: { type: string }
+        prenoms: { type: string }
+        collectivite_id: { type: integer }
+        parrains:
+          type: array
+          minItems: 2
+          items:
+            type: object
+            required: [parrain_id]
+            properties:
+              parrain_id: { type: integer }
+              nature_relation: { type: string, enum: [famille, amis, collègues, autre] }
+        paiement_initial:
+          type: object
+          properties:
+            montant_total: { type: number, description: "Doit être 250.000 Ar (50k adhésion + 200k annuelle)" }
+            mode: { type: string, enum: [ESPECES, MOBILE_MONEY, VIREMENT] }
+
+    CompteCreation:
+      type: object
+      required: [type, titulaire, entite_id]
+      properties:
+        type: { type: string, enum: [caisse, bancaire, mobile_money] }
+        titulaire: { type: string }
+        entite_id: { type: integer }
+        code_banque: { type: string, pattern: '^\d{5}$' }
+        code_guichet: { type: string, pattern: '^\d{5}$' }
+        numero_compte: { type: string, pattern: '^\d{11}$' }
+        cle_rib: { type: string, pattern: '^\d{2}$' }
+        operateur: { type: string, enum: [MVOLA, ORANGE, AIRTEL] }
+        numero_tel: { type: string }
+
+    PresenceRecord:
+      type: object
+      required: [membre_id, statut]
+      properties:
+        membre_id: { type: integer }
+        statut: { type: string, enum: [PRESENT, ABSENT, EXCUSE] }
+
+    RapportCollectivite:
+      type: object
+      properties:
+        collectivite_id: { type: integer }
+        nom_collectivite: { type: string }
+        taux_assiduite_global: { type: number, format: float }
+        pourcentage_membres_a_jour: { type: number, format: float }
+        nombre_nouveaux_adherents: { type: integer }
