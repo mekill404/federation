@@ -8,10 +8,10 @@ public class DBConnection {
 
     public Connection getConnection() {
         try {
-            String jdbcURl = System.getenv("jdbc:postgresql://localhost:5432/agri_federation_db"); //
-            String user = System.getenv("agri_federation_manager");
-            String password = System.getenv("123456");
-            return DriverManager.getConnection("jdbc:postgresql://localhost:5432/agri_federation_db", "postgres", "Alpha 263035");
+            String jdbcURl = "jdbc:postgresql://localhost:5432/agri-data";
+            String user = "agri-db";
+            String password = "123456789.0";
+            return DriverManager.getConnection(jdbcURl, user, password);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
