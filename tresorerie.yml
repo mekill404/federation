@@ -2,16 +2,22 @@ openapi: 3.0.0
 info:
   title: API Trésorerie
   version: 1.0.0
-  description: Gestion des comptes et trésorerie
-
-servers:
-  - url: http://localhost:3000/api
-    description: API de gestion de la trésorerie
+  description: Gestion des comptes bancaires (RIB 23 chiffres), Mobile Money et Caisses.
 
 paths:
   /comptes:
+    get:
+      summary: Liste des comptes de l'entité
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Compte'
     post:
-      summary: Créer un nouveau compte
+      summary: Créer un compte (Bancaire, Mobile ou Caisse)
       requestBody:
         required: true
         content:
@@ -21,162 +27,72 @@ paths:
       responses:
         '201':
           description: Compte créé
-        '400':
-          description: Données invalides
-    get:
-      summary: Lister tous les comptes
-      responses:
-        '200':
-          description: Liste des comptes
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Compte'
   /comptes/{id}:
     get:
-      summary: Obtenir les détails d'un compte
+      summary: Détails du compte
       parameters:
         - name: id
           in: path
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
       responses:
         '200':
-          description: Détails du compte
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Compte'
-        '404':
-          description: Compte non trouvé
     put:
-      summary: Mettre à jour un compte
+      summary: Ajuster le solde ou le titulaire
       parameters:
         - name: id
           in: path
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CompteUpdate'
       responses:
         '200':
-          description: Compte mis à jour
-        '404':
-          description: Compte non trouvé
+          description: Mis à jour
     delete:
-      summary: Supprimer un compte
+      summary: Clôturer un compte
       parameters:
         - name: id
           in: path
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
       responses:
-        '200':
-          description: Compte supprimé
-        '404':
-          description: Compte non trouvé
-  /collectivites/{id}/comptes:
-    get:
-      summary: Lister les comptes d'une collectivité
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        '200':
-          description: Liste des comptes
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Compte'
-  /federation/comptes:
-    get:
-      summary: Lister les comptes de la fédération
-      responses:
-        '200':
-          description: Liste des comptes
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Compte'
+        '204':
+          description: Clôturé
 
 components:
   schemas:
     CompteCreation:
       type: object
-      required:
-        - type
-        - collectivite_id
-        - titulaire
+      required: [type, titulaire, entite_id, entite_type]
       properties:
-        type:
-          type: string
-          enum: [caisse, bancaire, mobile_money]
-        collectivite_id:
-          type: integer
-          description: ID de la collectivité ou null pour fédération
-        titulaire:
-          type: string
-        banque:
-          type: string
-          enum: [BRED, MCB, BMOI, BOA, BGFI, AFG, ACCÈS BANQUE, BAOBAB, SIPEM]
-        numero_compte:
-          type: string
-          pattern: '^\d{23}$'
-          description: Format BBBBBGGGGGCCCCCCCCCCCKK
-        service_mobile:
-          type: string
-          enum: [Orange Money, Mvola, Airtel Money]
-        numero_telephone:
-          type: string
+        type: { type: string, enum: [caisse, bancaire, mobile_money] }
+        titulaire: { type: string }
+        entite_id: { type: integer }
+        entite_type: { type: string, enum: [COLLECTIVITE, FEDERATION] }
+        banque_nom: { type: string, enum: [BRED, MCB, BMOI, BOA, BGFI, AFG, SIPEM] }
+        code_banque: { type: string, pattern: '^\d{5}$' }
+        code_guichet: { type: string, pattern: '^\d{5}$' }
+        numero_compte: { type: string, pattern: '^\d{11}$' }
+        cle_rib: { type: string, pattern: '^\d{2}$' }
+        operateur: { type: string, enum: [MVOLA, ORANGE, AIRTEL] }
+        numero_tel: { type: string }
     Compte:
-      type: object
-      properties:
-        id:
-          type: integer
-        type:
-          type: string
-        collectivite_id:
-          type: integer
-        titulaire:
-          type: string
-        banque:
-          type: string
-        numero_compte:
-          type: string
-        service_mobile:
-          type: string
-        numero_telephone:
-          type: string
-        solde:
-          type: number
-          description: Solde en MGA
-        date_solde:
-          type: string
-          format: date
+      allOf:
+        - $ref: '#/components/schemas/CompteCreation'
+        - type: object
+          properties:
+            id: { type: integer }
+            solde: { type: number }
     CompteUpdate:
       type: object
       properties:
-        titulaire:
-          type: string
-        solde:
-          type: number
-        date_solde:
-          type: string
-          format: date</content>
-<parameter name="filePath">/home/mekill404/Documents/PROJET/hei/federation/tresorerie.yml
+        titulaire: { type: string }
+        solde: { type: number }
