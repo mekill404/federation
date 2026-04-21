@@ -8,9 +8,9 @@ public class DBConnection {
 
     public Connection getConnection() {
         try {
-            String jdbcURl = "jdbc:postgresql://localhost:5432/agri-data";
-            String user = "agri-db";
-            String password = "123456789.0";
+            String jdbcURl = System.getProperty("DB_URL");
+            String user = System.getProperty("DB_USER");
+            String password = System.getProperty("DB_PASSWORD");
             return DriverManager.getConnection(jdbcURl, user, password);
         } catch (SQLException e) {
             throw new RuntimeException(e);
