@@ -1,90 +1,85 @@
 package com.alpha.federation.service;
 
-import com.alpha.federation.model.Collectivity;
-import com.alpha.federation.model.CollectivityStructure;
-import com.alpha.federation.model.Member;
+import com.alpha.federation.dto.request.CreateCollectivityRequest;
+import com.alpha.federation.dto.response.CollectivityResponse;
+import com.alpha.federation.exception.BadRequestException;
+import com.alpha.federation.exception.NotFoundException;
+import com.alpha.federation.mapper.CollectivityMapper;
+import com.alpha.federation.model.CollectivityEntity;
+import com.alpha.federation.model.MemberEntity;
 import com.alpha.federation.repository.CollectivityRepository;
 import com.alpha.federation.repository.MemberRepository;
-
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class CollectivityService {
 
-	private final CollectivityRepository collectivityRepository;
-	private final MemberRepository memberRepository;
+    private final CollectivityRepository collectivityRepository;
+    private final MemberRepository memberRepository;
+    private final CollectivityMapper collectivityMapper;
 
-	public CollectivityService(CollectivityRepository collectivityRepository, MemberRepository memberRepository) {
-		this.collectivityRepository = collectivityRepository;
-		this.memberRepository = memberRepository;
-	}
+    public CollectivityService(CollectivityRepository collectivityRepository, MemberRepository memberRepository, CollectivityMapper collectivityMapper) {
+        this.collectivityRepository = collectivityRepository;
+        this.memberRepository = memberRepository;
+        this.collectivityMapper = collectivityMapper;
+    }
 
-	public List<Collectivity> createCollectivities(List<Collectivity> requests) {
-		List<Collectivity> result = new ArrayList<>();
-		int currentYear = LocalDate.now().getYear();
+    public List<CollectivityResponse> createCollectivities(List<CreateCollectivityRequest> requests) {
+        List<CollectivityResponse> responses = new ArrayList<>();
+        for (CreateCollectivityRequest req : requests) {
+            responses.add(createSingleCollectivity(req));
+        }
+        return responses;
+    }
 
-		for (Collectivity req : requests) {
-			if (!req.isFederationApproval()) {
-				throw new IllegalArgumentException("L'approbation de la fédération est obligatoire.");
-			}
+    private CollectivityResponse createSingleCollectivity(CreateCollectivityRequest request) {
+        if (!request.isFederationApproval()) {
+            throw new BadRequestException("Federation approval is required.");
+        }
 
-			List<String> memberIds = req.getMembers().stream()
-					.map(Member::getId)
-					.toList();
-			if (memberIds == null || memberIds.size() < 10) {
-				throw new IllegalArgumentException("Au moins 10 membres sont requis pour créer une collectivité.");
-			}
+        List<String> memberIds = request.getMembers();
+        if (memberIds == null || memberIds.size() < 10) {
+            throw new BadRequestException("At least 10 members are required to create a collectivity.");
+        }
 
-			long anciens = memberIds.stream()
-					.filter(id -> {
-						LocalDate adhesion = memberRepository.getAdhesionDate(id);
-						return adhesion != null &&
-								ChronoUnit.MONTHS.between(adhesion, LocalDate.now()) >= 6;
-					})
-					.count();
-			if (anciens < 5) {
-				throw new IllegalArgumentException("Au moins 5 membres doivent avoir 6 mois d'ancienneté.");
-			}
+        long anciens = memberIds.stream()
+                .map(id -> {
+                    MemberEntity m = memberRepository.findById(id);
+                    if (m == null) throw new NotFoundException("Member not found: " + id);
+                    return m;
+                })
+                .filter(m -> ChronoUnit.MONTHS.between(m.getCreatedAt(), LocalDate.now()) >= 6)
+                .count();
+        if (anciens < 5) {
+            throw new BadRequestException("At least 5 members must have 6 months of seniority.");
+        }
 
-			CollectivityStructure structInput = req.getStructure();
-			if (structInput == null ||
-					structInput.getPresident() == null || structInput.getVicePresident() == null ||
-					structInput.getTreasurer() == null || structInput.getSecretary() == null) {
-				throw new IllegalArgumentException("Tous les postes du bureau doivent être pourvus.");
-			}
+        CreateCollectivityRequest.StructureInput struct = request.getStructure();
+        if (struct == null || struct.getPresident() == null || struct.getVicePresident() == null ||
+            struct.getTreasurer() == null || struct.getSecretary() == null) {
+            throw new BadRequestException("All positions in the board must be filled.");
+        }
 
-			Collectivity col = new Collectivity();
-			col.setId(UUID.randomUUID().toString());
-			col.setLocation(req.getLocation());
+        CollectivityEntity entity = collectivityMapper.toEntity(request);
+        entity = collectivityRepository.save(entity);
 
-			collectivityRepository.save(col);
-			collectivityRepository.saveStructure(col.getId(),
-					structInput.getPresident(),
-					structInput.getVicePresident(),
-					structInput.getTreasurer(),
-					structInput.getSecretary(),
-					currentYear);
-			collectivityRepository.addMemberships(col.getId(), memberIds);
+        int currentYear = LocalDate.now().getYear();
+        collectivityRepository.saveStructure(entity.getId(),
+                struct.getPresident(),
+                struct.getVicePresident(),
+                struct.getTreasurer(),
+                struct.getSecretary(),
+                currentYear);
 
-			List<Member> members = collectivityRepository.getMembers(col.getId());
-			col.setMembers(members);
+        for (String memberId : memberIds) {
+            collectivityRepository.addMembership(entity.getId(), memberId, "JUNIOR");
+        }
 
-			CollectivityStructure structResp = new CollectivityStructure();
-			structResp.setPresident(structInput.getPresident());
-			structResp.setVicePresident(structInput.getVicePresident());
-			structResp.setTreasurer(structInput.getTreasurer());
-			structResp.setSecretary(structInput.getSecretary());
-			col.setStructure(structResp);
-			col.setStructure(structResp);
-
-			result.add(col);
-		}
-		return result;
-	}
+        CollectivityEntity fullEntity = collectivityRepository.findById(entity.getId());
+        return collectivityMapper.toResponse(fullEntity);
+    }
 }
