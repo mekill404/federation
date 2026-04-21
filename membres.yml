@@ -1,174 +1,90 @@
 openapi: 3.0.0
 info:
   title: API Membres
-  version: 1.0.0
-  description: Gestion des membres des collectivités
-
-servers:
-  - url: http://localhost:3000/api
-    description: API de gestion des membres
+  version: 1.1.0
+  description: Gestion des membres et processus d'admission avec min 2 parrains.
 
 paths:
   /membres:
     get:
-      summary: Lister tous les membres
+      summary: Liste filtrable des membres
+      parameters:
+        - name: statut
+          in: query
+          schema: { type: string, enum: [CONFIRME, JUNIOR] }
       responses:
         '200':
-          description: Liste des membres
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/Membre'
+  /membres/admission:
+    post:
+      summary: Admission d'un nouveau membre (B-2)
+      description: Nécessite 2 parrains confirmés et le paiement intégral (50k + cotisation annuelle).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DemandeAdmission'
+      responses:
+        '201':
+          description: Admis avec succès
+        '403':
+          description: Parrainage insuffisant
   /membres/{id}:
     get:
-      summary: Obtenir les détails d'un membre
+      summary: Détails complets d'un membre
       parameters:
         - name: id
           in: path
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
       responses:
         '200':
-          description: Détails du membre
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Membre'
-        '404':
-          description: Membre non trouvé
     put:
-      summary: Mettre à jour un membre
+      summary: Mise à jour du profil ou du poste
       parameters:
         - name: id
           in: path
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
       requestBody:
-        required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/MembreUpdate'
       responses:
         '200':
-          description: Membre mis à jour
-        '404':
-          description: Membre non trouvé
+          description: Profil mis à jour
     delete:
-      summary: Supprimer un membre (démission)
+      summary: Sortie d'un membre (Désactivation)
       parameters:
         - name: id
           in: path
           required: true
-          schema:
-            type: integer
+          schema: { type: integer }
       responses:
-        '200':
-          description: Membre supprimé
-        '404':
-          description: Membre non trouvé
-  /membres/{id}/changer-collectivite:
-    post:
-      summary: Changer de collectivité
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - nouvelle_collectivite_id
-              properties:
-                nouvelle_collectivite_id:
-                  type: integer
-      responses:
-        '200':
-          description: Collectivité changée
-        '404':
-          description: Membre ou collectivité non trouvée
-  /membres/{id}/assiduite:
-    get:
-      summary: Obtenir l'assiduité d'un membre
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-        - name: periode
-          in: query
-          schema:
-            type: string
-            format: date
-            description: Période (YYYY-MM)
-      responses:
-        '200':
-          description: Taux d'assiduité
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  membre_id:
-                    type: integer
-                  taux_assiduite:
-                    type: number
-                  periode:
-                    type: string
+        '204':
+          description: Membre désactivé
 
 components:
   schemas:
-    MembreAdmission:
+    DemandeAdmission:
       type: object
-      required:[nom, prenoms, telephone, parrains, paiement_initial]
+      required: [nom, prenoms, telephone, parrains, paiement_initial]
       properties:
-        id:
-          type: integer
-        nom:
-          type: string
-        prenoms:
-          type: string
-        date_naissance:
-          type: string
-          format: date
-        genre:
-          type: string
-          enum: [féminin, masculin]
-        adresse:
-          type: string
-        metier:
-          type: string
-        telephone:
-          type: string
-        email:
-          type: string
-        date_adhesion:
-          type: string
-          format: date
-        poste:
-          type: string
-          enum: [président, président adjoint, trésorier, secrétaire, membre confirmé, membre junior]
-        collectivite_id:
-          type: integer
-        mandats:
-          type: array
-          items:
-            type: object
-            properties:
-              poste:
-                type: string
-              annee:
-                type: integer
+        nom: { type: string }
+        prenoms: { type: string }
+        telephone: { type: string }
+        collectivite_id: { type: integer }
         parrains:
           type: array
           minItems: 2
@@ -176,37 +92,25 @@ components:
             type: object
             required: [parrain_id, nature_relation]
             properties:
-              parrain_id:
-                type: integer
-                description: ID d'un membre confirmé
-              nature_relation:
-                type: string
-                enum: [famille, amis, collègues, autre]
+              parrain_id: { type: integer }
+              nature_relation: { type: string, enum: [famille, amis, collègues, autre] }
         paiement_initial:
           type: object
-          required: [frais_adhesion, cotisations_annuelles]
           properties:
-            frais_adhesion:
-              type: number
-              example: 50000
-            cotisations_annuelles:
-              type: number
-              description: Intégralité des cotisations annuelles de la collectivité
+            montant_total: { type: number, description: "50.000 + Cotisation Annuelle" }
+            mode: { type: string, enum: [ESPECES, MOBILE_MONEY, VIREMENT] }
+    Membre:
+      type: object
+      properties:
+        id: { type: integer }
+        nom: { type: string }
+        prenoms: { type: string }
+        statut: { type: string, enum: [CONFIRME, JUNIOR] }
+        date_adhesion: { type: string, format: date }
+        est_actif: { type: boolean }
     MembreUpdate:
       type: object
       properties:
-        nom:
-          type: string
-        prenoms:
-          type: string
-        adresse:
-          type: string
-        metier:
-          type: string
-        telephone:
-          type: string
-        email:
-          type: string
-        poste:
-          type: string</content>
-<parameter name="filePath">/home/mekill404/Documents/PROJET/hei/federation/membres.yml
+        adresse: { type: string }
+        metier: { type: string }
+        poste: { type: string, enum: [PRESIDENT, TRESORIER, SECRETAIRE, MEMBRE] }
