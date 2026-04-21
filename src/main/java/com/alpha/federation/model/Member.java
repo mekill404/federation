@@ -30,5 +30,5 @@ public class Member {
     private boolean registrationFeePaid;
     private boolean membershipDuesPaid;
 
-    private List<Member> refere = new ArrayList<>();
+    private List<Member> referees = new ArrayList<>();
 }
