@@ -8,7 +8,6 @@ import com.alpha.federation.model.enums.Genre;
 import com.alpha.federation.model.enums.StatutMembre;
 
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -16,13 +15,13 @@ import lombok.Setter;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class Member {
-    private Long id;
-    private String name;
-    private String firstname;
-    private LocalDate birthdate;
+    private String id;
+    private String lastName;
+    private String firstName;
+    private LocalDate birthDate;
     private Genre genre;
     private String adresse;
-    private String phone;
+    private String phoneNumber;
     private LocalDate AdmissionDate;
     private StatutMembre status;
     private String email;
