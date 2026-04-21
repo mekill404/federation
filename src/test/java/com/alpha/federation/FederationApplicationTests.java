@@ -9,5 +9,4 @@ class FederationApplicationTests {
     @Test
     void contextLoads() {
     }
-
 }
