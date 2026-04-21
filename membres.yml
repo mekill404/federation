@@ -128,8 +128,9 @@ paths:
 
 components:
   schemas:
-    Membre:
+    MembreAdmission:
       type: object
+      required:[nom, prenoms, telephone, parrains, paiement_initial]
       properties:
         id:
           type: integer
@@ -168,6 +169,29 @@ components:
                 type: string
               annee:
                 type: integer
+        parrains:
+          type: array
+          minItems: 2
+          items:
+            type: object
+            required: [parrain_id, nature_relation]
+            properties:
+              parrain_id:
+                type: integer
+                description: ID d'un membre confirmé
+              nature_relation:
+                type: string
+                enum: [famille, amis, collègues, autre]
+        paiement_initial:
+          type: object
+          required: [frais_adhesion, cotisations_annuelles]
+          properties:
+            frais_adhesion:
+              type: number
+              example: 50000
+            cotisations_annuelles:
+              type: number
+              description: Intégralité des cotisations annuelles de la collectivité
     MembreUpdate:
       type: object
       properties:
