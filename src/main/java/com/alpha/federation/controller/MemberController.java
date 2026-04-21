@@ -1,12 +1,10 @@
 package com.alpha.federation.controller;
 
-import com.alpha.federation.model.Member;
+import com.alpha.federation.dto.request.CreateMemberRequest;
+import com.alpha.federation.dto.response.MemberResponse;
 import com.alpha.federation.service.MemberService;
-
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
@@ -20,14 +18,8 @@ public class MemberController {
     }
 
     @PostMapping
-    public ResponseEntity<List<Member>> createMembers(@RequestBody List<Member> members) {
-        try {
-            List<Member> created = memberService.registerMembers(members);
-            return ResponseEntity.status(HttpStatus.CREATED).body(created);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+    @ResponseStatus(HttpStatus.CREATED)
+    public List<MemberResponse> createMembers(@RequestBody List<CreateMemberRequest> requests) {
+        return memberService.registerMembers(requests);
     }
 }
