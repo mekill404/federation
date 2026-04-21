@@ -1,6 +1,6 @@
 package com.alpha.federation.model.enums;
 
-public enum Genre {
+public enum Gender {
     MALE,
     FEMALE
 }
