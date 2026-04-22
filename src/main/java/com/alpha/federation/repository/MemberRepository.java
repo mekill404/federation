@@ -14,7 +14,6 @@ import java.util.UUID;
 @Repository
 public class MemberRepository {
 
-    /*all message in english */
     private final DBConnection dbConnection;
 
     public MemberRepository(DBConnection dbConnection) {
@@ -22,7 +21,7 @@ public class MemberRepository {
     }
 
     public MemberEntity save(MemberEntity member) {
-        String sql = "INSERT INTO members (id, first_name, last_name, birth_date, gender, address, profession, phone_number, email, occupation, created_at) " +
+        String sql = "INSERT INTO member (id, first_name, last_name, birth_date, gender, address, profession, phone_number, email, occupation, created_at) " +
                      "VALUES (?, ?, ?, ?, ?::gender, ?, ?, ?, ?, ?::member_occupation, ?)";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -78,7 +77,7 @@ public class MemberRepository {
 
     public List<MemberEntity> findReferees(String candidateId) {
         List<MemberEntity> referees = new ArrayList<>();
-        String sql = "SELECT m.* FROM members m JOIN referees r ON m.id = r.referee_id WHERE r.candidate_id = ?";
+        String sql = "SELECT m.* FROM member m JOIN referees r ON m.id = r.referee_id WHERE r.candidate_id = ?";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, candidateId);
@@ -94,7 +93,7 @@ public class MemberRepository {
     }
 
     public LocalDate getAdhesionDate(String memberId) {
-        String sql = "SELECT created_at FROM members WHERE id = ?";
+        String sql = "SELECT created_at FROM member WHERE id = ?";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, memberId);

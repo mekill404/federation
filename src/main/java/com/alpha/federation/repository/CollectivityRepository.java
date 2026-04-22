@@ -73,7 +73,7 @@ public class CollectivityRepository {
 
     public List<MemberEntity> getMembers(String collectivityId) {
         List<MemberEntity> members = new ArrayList<>();
-        String sql = "SELECT m.* FROM members m JOIN membership ms ON m.id = ms.member_id WHERE ms.collectivity_id = ? AND ms.left_at IS NULL";
+        String sql = "SELECT m.* FROM member m JOIN membership ms ON m.id = ms.member_id WHERE ms.collectivity_id = ? AND ms.left_at IS NULL";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, collectivityId);
@@ -114,7 +114,6 @@ public class CollectivityRepository {
                     col.setLocation(rs.getString("location"));
                     col.setFederationApproval(rs.getBoolean("federation_approval"));
                     col.setApprovalDate(rs.getDate("approval_date").toLocalDate());
-                    // Charger le bureau et les membres
                     loadStructure(col);
                     col.setMembers(getMembers(col.getId()));
                     return col;
