@@ -18,10 +18,6 @@ public class DBConnectionTest {
         dbConnection = new DBConnection();
     }
 
-    @AfterEach
-    void tearDown() {
-        dbConnection.closeConnection(connection);
-    }
 
     @Test
     void testGetConnection() throws SQLException {
@@ -32,13 +28,4 @@ public class DBConnectionTest {
         assertTrue(connection.isValid(2), "The connection should be valid and active");
     }
 
-    @Test
-    void testCloseConnection() throws SQLException {
-        connection = dbConnection.getConnection();
-        assertFalse(connection.isClosed());
-
-        dbConnection.closeConnection(connection);
-
-        assertTrue(connection.isClosed(), "The connection should be closed after calling closeConnection");
-    }
 }

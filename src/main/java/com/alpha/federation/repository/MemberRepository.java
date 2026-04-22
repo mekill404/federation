@@ -64,7 +64,7 @@ public class MemberRepository {
 	}
 
 	public MemberEntity findById(String id) {
-		String sql = "SELECT * FROM member WHERE id = ?";
+		String sql = "SELECT * FROM member WHERE id = ?::uuid";
 		try (Connection conn = dbConnection.getConnection();
 				PreparedStatement pstmt = conn.prepareStatement(sql)) {
 			pstmt.setString(1, id);
@@ -81,7 +81,7 @@ public class MemberRepository {
 
 	public List<MemberEntity> findReferees(String candidateId) {
 		List<MemberEntity> referees = new ArrayList<>();
-		String sql = "SELECT m.* FROM member m JOIN referees r ON m.id = r.referee_id WHERE r.candidate_id = ?";
+		String sql = "SELECT m.* FROM member m JOIN referees r ON m.id = r.referee_id WHERE r.candidate_id = ?::uuid";
 		try (Connection conn = dbConnection.getConnection();
 				PreparedStatement pstmt = conn.prepareStatement(sql)) {
 			pstmt.setString(1, candidateId);
@@ -97,7 +97,7 @@ public class MemberRepository {
 	}
 
 	public LocalDate getAdhesionDate(String memberId) {
-		String sql = "SELECT created_at FROM member WHERE id = ?";
+		String sql = "SELECT created_at FROM member WHERE id = ?::uuid";
 		try (Connection conn = dbConnection.getConnection();
 				PreparedStatement pstmt = conn.prepareStatement(sql)) {
 			pstmt.setString(1, memberId);
