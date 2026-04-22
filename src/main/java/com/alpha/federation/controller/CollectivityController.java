@@ -1,5 +1,6 @@
 package com.alpha.federation.controller;
 
+import com.alpha.federation.dto.request.AssignIdentifiersRequest;
 import com.alpha.federation.dto.request.CreateCollectivityRequest;
 import com.alpha.federation.dto.response.CollectivityResponse;
 import com.alpha.federation.service.CollectivityService;
