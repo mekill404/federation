@@ -48,18 +48,19 @@ public class MemberRepository {
 		}
 	}
 
-	public void saveReferees(String candidateId, List<String> refereeIds) {
-		String sql = "INSERT INTO referees (candidate_id, referee_id) VALUES (?, ?)";
+	public void saveReferees(String candidateId, List<String> refereeIds, String targetCollectivityId) {
+		String sql = "INSERT INTO referees (candidate_id, referee_id, target_collectivity_id) VALUES (?::uuid, ?::uuid, ?::uuid)";
 		try (Connection conn = dbConnection.getConnection();
-				PreparedStatement pstmt = conn.prepareStatement(sql)) {
+			PreparedStatement pstmt = conn.prepareStatement(sql)) {
 			for (String refId : refereeIds) {
 				pstmt.setString(1, candidateId);
 				pstmt.setString(2, refId);
+				pstmt.setString(3, targetCollectivityId);
 				pstmt.addBatch();
 			}
 			pstmt.executeBatch();
 		} catch (SQLException e) {
-			throw new BadRequestException("Error saving referees: " + e.getMessage());
+			throw new RuntimeException("Error saving referees: " + e.getMessage());
 		}
 	}
 

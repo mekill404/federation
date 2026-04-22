@@ -16,8 +16,6 @@ import java.util.List;
 @Service
 public class MemberService {
 
-	/*all to BadRequestException*/
-
     private final MemberRepository memberRepository;
     private final CollectivityRepository collectivityRepository;
     private final MemberMapper memberMapper;
@@ -69,8 +67,7 @@ public class MemberService {
 
         MemberEntity newMember = memberMapper.toEntity(request);
         newMember = memberRepository.save(newMember);
-        memberRepository.saveReferees(newMember.getId(), request.getReferees());
-
+        memberRepository.saveReferees(newMember.getId(), request.getReferees(), targetCollectivityId);
         collectivityRepository.addMembership(targetCollectivityId, newMember.getId(), "JUNIOR");
 
         newMember.setReferees(memberRepository.findReferees(newMember.getId()));
