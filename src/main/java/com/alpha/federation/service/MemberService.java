@@ -16,8 +16,6 @@ import java.util.List;
 @Service
 public class MemberService {
 
-	/*all to BadRequestException*/
-
     private final MemberRepository memberRepository;
     private final CollectivityRepository collectivityRepository;
     private final MemberMapper memberMapper;
