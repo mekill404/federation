@@ -6,17 +6,22 @@ import org.springframework.context.annotation.Configuration;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+
 @Configuration
 public class DBConnection {
-@Bean
+
+    @Bean
     public Connection getConnection() {
         try {
-            String jdbcURl = System.getProperty("DB_URL");
-            String user = System.getProperty("DB_USER");
-            String password = System.getProperty("DB_PASSWORD");
-            return DriverManager.getConnection(jdbcURl, user, password);
+
+            String url = "jdbc:postgresql://localhost:5432/federation";
+            String user = "alking";
+            String password = "Alpha 263035";
+
+
+            return DriverManager.getConnection(url, user, password);
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Erreur de connexion : " + e.getMessage());
         }
     }
 
