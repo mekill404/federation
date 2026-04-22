@@ -20,7 +20,6 @@ public class CollectivityMapper {
         CollectivityEntity entity = new CollectivityEntity();
         entity.setLocation(request.getLocation());
         entity.setFederationApproval(request.isFederationApproval());
-        // Les membres et le bureau seront ajoutés plus tard
         return entity;
     }
 
@@ -28,6 +27,8 @@ public class CollectivityMapper {
         CollectivityResponse response = new CollectivityResponse();
         response.setId(entity.getId());
         response.setLocation(entity.getLocation());
+        response.setUniqueNumber(entity.getUniqueNumber());
+        response.setUniqueName(entity.getUniqueName());
 
         CollectivityStructureResponse structure = new CollectivityStructureResponse();
         structure.setPresident(memberMapper.toResponse(entity.getPresident()));
