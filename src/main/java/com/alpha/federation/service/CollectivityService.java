@@ -1,6 +1,7 @@
 package com.alpha.federation.service;
 
 import com.alpha.federation.dto.request.AssignIdentifiersRequest;
+import com.alpha.federation.dto.request.CollectivityInformationRequest;
 import com.alpha.federation.dto.request.CreateCollectivityRequest;
 import com.alpha.federation.dto.request.CreateCollectivityStructure;
 import com.alpha.federation.dto.response.CollectivityResponse;
@@ -114,5 +115,26 @@ public class CollectivityService {
 
         CollectivityEntity updatedEntity = collectivityRepository.findById(collectivityId);
         return collectivityMapper.toResponse(updatedEntity);
+    }
+
+    public CollectivityResponse assignInformations(String collectivityId, CollectivityInformationRequest request) {
+        CollectivityEntity entity = collectivityRepository.findById(collectivityId);
+        if (entity == null)
+            throw new NotFoundException("Collectivity not found");
+
+        if (entity.getUniqueNumber() != null || entity.getUniqueName() != null) {
+            throw new ConflictException("Informations already assigned");
+        }
+
+        String uniqueNumber = String.valueOf(request.getNumber());
+        if (collectivityRepository.existsByUniqueNumber(uniqueNumber)) {
+            throw new BadRequestException("Number already exists");
+        }
+        if (collectivityRepository.existsByUniqueName(request.getName())) {
+            throw new BadRequestException("Name already exists");
+        }
+
+        collectivityRepository.updateIdentifiers(collectivityId, uniqueNumber, request.getName());
+        return collectivityMapper.toResponse(collectivityRepository.findById(collectivityId));
     }
 }

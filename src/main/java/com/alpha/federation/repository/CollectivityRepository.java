@@ -1,8 +1,12 @@
 package com.alpha.federation.repository;
 
 import com.alpha.federation.DBConnection.DBConnection;
+import com.alpha.federation.exception.BadRequestException;
+import com.alpha.federation.exception.ConflictException;
+import com.alpha.federation.exception.NotFoundException;
 import com.alpha.federation.model.CollectivityEntity;
 import com.alpha.federation.model.MemberEntity;
+
 import org.springframework.stereotype.Repository;
 import java.sql.*;
 import java.time.LocalDate;
@@ -33,7 +37,7 @@ public class CollectivityRepository {
 			pstmt.executeUpdate();
 			return col;
 		} catch (SQLException e) {
-			throw new RuntimeException("Error saving collectivity: " + e.getMessage());
+			throw new BadRequestException("Error saving collectivity: " + e.getMessage());
 		}
 	}
 
@@ -54,8 +58,24 @@ public class CollectivityRepository {
 			pstmt.setDate(8, Date.valueOf(LocalDate.of(year, 12, 31)));
 			pstmt.executeUpdate();
 		} catch (SQLException e) {
-			throw new RuntimeException("Error saving structure: " + e.getMessage());
+			throw new BadRequestException("Error saving structure: " + e.getMessage());
 		}
+	}
+
+	public String findCollectivityIdByMemberId(String memberId) {
+		String sql = "SELECT collectivity_id FROM membership WHERE member_id = ?::uuid AND left_at IS NULL LIMIT 1";
+		try (Connection conn = dbConnection.getConnection();
+				PreparedStatement pstmt = conn.prepareStatement(sql)) {
+			pstmt.setString(1, memberId);
+			try (ResultSet rs = pstmt.executeQuery()) {
+				if (rs.next()) {
+					return rs.getString("collectivity_id");
+				}
+			}
+		} catch (SQLException e) {
+			throw new NotFoundException("Error finding collectivity for member: " + e.getMessage());
+		}
+		return null;
 	}
 
 	public void addMembership(String collectivityId, String memberId, String role) {
@@ -68,7 +88,7 @@ public class CollectivityRepository {
 			pstmt.setDate(4, Date.valueOf(LocalDate.now()));
 			pstmt.executeUpdate();
 		} catch (SQLException e) {
-			throw new RuntimeException("Error adding member: " + e.getMessage());
+			throw new BadRequestException("Error adding member: " + e.getMessage());
 		}
 	}
 
@@ -84,7 +104,7 @@ public class CollectivityRepository {
 				}
 			}
 		} catch (SQLException e) {
-			throw new RuntimeException("Error retrieving members: " + e.getMessage());
+			throw new NotFoundException("Error retrieving members: " + e.getMessage());
 		}
 		return members;
 	}
@@ -99,7 +119,7 @@ public class CollectivityRepository {
 				return rs.next();
 			}
 		} catch (SQLException e) {
-			throw new RuntimeException("Error checking membership: " + e.getMessage());
+			throw new NotFoundException("Error checking membership: " + e.getMessage());
 		}
 	}
 
@@ -124,7 +144,7 @@ public class CollectivityRepository {
 				}
 			}
 		} catch (SQLException e) {
-			throw new RuntimeException("Error searching collectivity: " + e.getMessage());
+			throw new NotFoundException("Error searching collectivity: " + e.getMessage());
 		}
 		return null;
 	}
@@ -144,7 +164,7 @@ public class CollectivityRepository {
 				}
 			}
 		} catch (SQLException e) {
-			throw new RuntimeException("Error loading structure: " + e.getMessage());
+			throw new NotFoundException("Error loading structure: " + e.getMessage());
 		}
 	}
 
@@ -157,7 +177,7 @@ public class CollectivityRepository {
 				return rs.next();
 			}
 		} catch (SQLException e) {
-			throw new RuntimeException("Error checking unique number: " + e.getMessage());
+			throw new ConflictException("Error checking unique number: " + e.getMessage());
 		}
 	}
 
@@ -170,7 +190,7 @@ public class CollectivityRepository {
 				return rs.next();
 			}
 		} catch (SQLException e) {
-			throw new RuntimeException("Error checking unique name: " + e.getMessage());
+			throw new ConflictException("Error checking unique name: " + e.getMessage());
 		}
 	}
 
@@ -183,10 +203,10 @@ public class CollectivityRepository {
 			pstmt.setString(3, collectivityId);
 			int rows = pstmt.executeUpdate();
 			if (rows == 0) {
-				throw new RuntimeException("Collectivity not found for update: " + collectivityId);
+				throw new NotFoundException("Collectivity not found for update: " + collectivityId);
 			}
 		} catch (SQLException e) {
-			throw new RuntimeException("Error updating identifiers: " + e.getMessage());
+			throw new BadRequestException("Error updating identifiers: " + e.getMessage());
 		}
 	}
 }
