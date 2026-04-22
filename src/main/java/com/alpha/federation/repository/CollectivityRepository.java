@@ -21,9 +21,7 @@ public class CollectivityRepository {
         this.memberRepository = memberRepository;
     }
 
-    // ===================== SAUVEGARDE INITIALE =====================
     public CollectivityEntity save(CollectivityEntity col) {
-        // Correction : table "collectivity" au lieu de "collectivities"
         String sql = "INSERT INTO collectivity (id, location, federation_approval, approval_date) VALUES (?, ?, ?, ?)";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -120,7 +118,6 @@ public class CollectivityRepository {
                     col.setLocation(rs.getString("location"));
                     col.setFederationApproval(rs.getBoolean("federation_approval"));
                     col.setApprovalDate(rs.getDate("approval_date").toLocalDate());
-                    // Nouveaux champs pour la fonctionnalité J
                     col.setUniqueNumber(rs.getString("unique_number"));
                     col.setUniqueName(rs.getString("unique_name"));
                     loadStructure(col);
@@ -161,7 +158,7 @@ public class CollectivityRepository {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, uniqueNumber);
             try (ResultSet rs = pstmt.executeQuery()) {
-                return rs.next(); // true si déjà utilisé
+                return rs.next();
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error checking unique number: " + e.getMessage());
