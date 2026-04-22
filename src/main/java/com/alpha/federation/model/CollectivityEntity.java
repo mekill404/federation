@@ -12,15 +12,9 @@ import java.util.List;
 @NoArgsConstructor @AllArgsConstructor
 public class CollectivityEntity {
 
-    private String uniqueNumber;
-    private String uniqueName;
-    private String id;
-    private String location;
+    private String uniqueNumber, uniqueName, id, location;
     private boolean federationApproval;
     private LocalDate approvalDate;
-    private MemberEntity president;
-    private MemberEntity vicePresident;
-    private MemberEntity treasurer;
-    private MemberEntity secretary;
+    private MemberEntity president, vicePresident, treasurer, secretary;
     private List<MemberEntity> members = new ArrayList<>();
 }

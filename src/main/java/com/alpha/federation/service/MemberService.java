@@ -69,6 +69,7 @@ public class MemberService {
         newMember = memberRepository.save(newMember);
         memberRepository.saveReferees(newMember.getId(), request.getReferees(), targetCollectivityId);
         collectivityRepository.addMembership(targetCollectivityId, newMember.getId(), "JUNIOR");
+        memberRepository.saveReferees(newMember.getId(), request.getReferees(), targetCollectivityId);
 
         newMember.setReferees(memberRepository.findReferees(newMember.getId()));
 

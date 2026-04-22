@@ -13,16 +13,10 @@ import java.util.List;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class MemberEntity {
-    private String id;
-    private String firstName;
-    private String lastName;
-    private LocalDate birthDate;
-    private Gender gender;
-    private String address;
-    private String profession;
-    private String phoneNumber;
-    private String email;
+    private String id, firstName, lastName;
+    private LocalDate createdAt, birthDate;
+    private String address, profession, phoneNumber, email;
     private Occupation occupation;
-    private LocalDate createdAt;
+    private Gender gender;
     private List<MemberEntity> referees = new ArrayList<>();
 }
