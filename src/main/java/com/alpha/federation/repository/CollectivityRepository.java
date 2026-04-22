@@ -21,6 +21,10 @@ public class CollectivityRepository {
         this.memberRepository = memberRepository;
     }
 
+<<<<<<< HEAD
+=======
+  
+>>>>>>> 8940c807920538c8f07160e238dc488a59b572ac
     public CollectivityEntity save(CollectivityEntity col) {
         String sql = "INSERT INTO collectivity (id, location, federation_approval, approval_date) VALUES (?, ?, ?, ?)";
         try (Connection conn = dbConnection.getConnection();
@@ -118,6 +122,10 @@ public class CollectivityRepository {
                     col.setLocation(rs.getString("location"));
                     col.setFederationApproval(rs.getBoolean("federation_approval"));
                     col.setApprovalDate(rs.getDate("approval_date").toLocalDate());
+<<<<<<< HEAD
+=======
+
+>>>>>>> 8940c807920538c8f07160e238dc488a59b572ac
                     col.setUniqueNumber(rs.getString("unique_number"));
                     col.setUniqueName(rs.getString("unique_name"));
                     loadStructure(col);

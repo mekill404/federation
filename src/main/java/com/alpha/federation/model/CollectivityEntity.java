@@ -11,6 +11,9 @@ import java.util.List;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 public class CollectivityEntity {
+
+    private String uniqueNumber;
+    private String uniqueName;
     private String id;
     private String location;
     private boolean federationApproval;
