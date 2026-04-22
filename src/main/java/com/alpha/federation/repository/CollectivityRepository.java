@@ -21,7 +21,7 @@ public class CollectivityRepository {
         this.memberRepository = memberRepository;
     }
 
-    // ===================== SAUVEGARDE INITIALE =====================
+  
     public CollectivityEntity save(CollectivityEntity col) {
         // Correction : table "collectivity" au lieu de "collectivities"
         String sql = "INSERT INTO collectivity (id, location, federation_approval, approval_date) VALUES (?, ?, ?, ?)";
@@ -120,7 +120,7 @@ public class CollectivityRepository {
                     col.setLocation(rs.getString("location"));
                     col.setFederationApproval(rs.getBoolean("federation_approval"));
                     col.setApprovalDate(rs.getDate("approval_date").toLocalDate());
-                    // Nouveaux champs pour la fonctionnalité J
+
                     col.setUniqueNumber(rs.getString("unique_number"));
                     col.setUniqueName(rs.getString("unique_name"));
                     loadStructure(col);
