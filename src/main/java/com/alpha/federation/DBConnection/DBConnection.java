@@ -1,37 +1,25 @@
 package com.alpha.federation.DBConnection;
 
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
+
+import com.alpha.federation.exception.ConflictException;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-@Configuration
+@Component
 public class DBConnection {
 
-    @Bean
-    public Connection getConnection() {
-        try {
+    public Connection getConnection() throws SQLException {
+        String jdbcURL = System.getProperty("DB_URL");
+        String user = System.getProperty("DB_USER");
+        String password = System.getProperty("DB_PASSWORD");
 
-            String url = "jdbc:postgresql://localhost:5432/federation";
-            String user = "alking";
-            String password = "Alpha 263035";
-
-
-            return DriverManager.getConnection(url, user, password);
-        } catch (SQLException e) {
-            throw new RuntimeException("Erreur de connexion : " + e.getMessage());
+        if (jdbcURL == null || user == null || password == null) {
+            throw new ConflictException("Database credentials not set. Check your .env file or system properties.");
         }
-    }
 
-    public void closeConnection(Connection connection) {
-        if (connection != null) {
-            try {
-                connection.close();
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }
+        return DriverManager.getConnection(jdbcURL, user, password);
     }
 }
