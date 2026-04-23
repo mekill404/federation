@@ -12,7 +12,6 @@ import com.alpha.federation.repository.*;
 import com.alpha.federation.mapper.MemberMapper;
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -24,6 +23,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class FinanceService {
 
+    /*remove all comment */
     private final PaymentRepository paymentRepository;
     private final CollectivityTransactionRepository transactionRepository;
     private final FinancialAccountRepository financialAccountRepository;
@@ -59,7 +59,7 @@ public class FinanceService {
             PaymentEntity payment = new PaymentEntity();
             payment.setMemberId(memberId);
             payment.setMembershipFeeId(req.getMembershipFeeIdentifier());
-            payment.setAmount((double) req.getAmount());
+            payment.setAmount(Double.valueOf(req.getAmount()));
             payment.setPaymentMode(req.getPaymentMode());
             payment.setAccountCreditedId(account.getId());
             payment.setCreationDate(LocalDate.now());
@@ -67,12 +67,12 @@ public class FinanceService {
 
             double newAmount = account.getAmount() + req.getAmount();
             financialAccountRepository.updateAmount(account.getId(), newAmount);
-            account.setAmount(newAmount);
+            account.setAmount(newAmount); 
 
             CollectivityTransactionEntity transaction = new CollectivityTransactionEntity();
             transaction.setCollectivityId(collectivityId);
             transaction.setMemberDebitedId(memberId);
-            transaction.setAmount((double) req.getAmount());
+            transaction.setAmount(Double.valueOf(req.getAmount()));
             transaction.setPaymentMode(req.getPaymentMode());
             transaction.setAccountCreditedId(account.getId());
             transaction.setCreationDate(LocalDate.now());
@@ -141,14 +141,45 @@ public class FinanceService {
                 .collect(Collectors.toList());
     }
 
+    public List<FinancialAccountResponse> getFinancialAccountsAtDate(String collectivityId, LocalDate at) {
+        if (collectivityRepository.findById(collectivityId) == null) {
+            throw new NotFoundException("Collectivity not found");
+        }
+
+        List<FinancialAccountEntity> accounts = financialAccountRepository.findByCollectivityId(collectivityId);
+        List<FinancialAccountResponse> responses = new ArrayList<>();
+
+        for (FinancialAccountEntity account : accounts) {
+            Double totalAfter = transactionRepository.sumAmountByAccountAfterDate(account.getId(), at);
+            double balanceAtDate = account.getAmount() - (totalAfter != null ? totalAfter : 0.0);
+
+            FinancialAccountEntity adjustedAccount = new FinancialAccountEntity();
+            adjustedAccount.setId(account.getId());
+            adjustedAccount.setCollectivityId(account.getCollectivityId());
+            adjustedAccount.setAccountType(account.getAccountType());
+            adjustedAccount.setHolderName(account.getHolderName());
+            adjustedAccount.setAmount(balanceAtDate);
+            adjustedAccount.setBankName(account.getBankName());
+            adjustedAccount.setBankCode(account.getBankCode());
+            adjustedAccount.setBankBranchCode(account.getBankBranchCode());
+            adjustedAccount.setBankAccountNumber(account.getBankAccountNumber());
+            adjustedAccount.setBankAccountKey(account.getBankAccountKey());
+            adjustedAccount.setMobileBankingService(account.getMobileBankingService());
+            adjustedAccount.setMobileNumber(account.getMobileNumber());
+
+            responses.add(mapFinancialAccountToResponse(adjustedAccount));
+        }
+        return responses;
+    }
+
     private MemberPaymentResponse mapToMemberPaymentResponse(PaymentEntity payment, FinancialAccountEntity account) {
-        MemberPaymentResponse response = new MemberPaymentResponse();
-        response.setId(payment.getId());
-        response.setAmount(payment.getAmount().intValue());
-        response.setPaymentMode(payment.getPaymentMode());
-        response.setAccountCredited(mapFinancialAccountToResponse(account));
-        response.setCreationDate(payment.getCreationDate());
-        return response;
+        MemberPaymentResponse resp = new MemberPaymentResponse();
+        resp.setId(payment.getId());
+        resp.setAmount(payment.getAmount().intValue());
+        resp.setPaymentMode(payment.getPaymentMode());
+        resp.setAccountCredited(mapFinancialAccountToResponse(account));
+        resp.setCreationDate(payment.getCreationDate());
+        return resp;
     }
 
     private MembershipFeeResponse mapToMembershipFeeResponse(MembershipFeeEntity fee) {
@@ -163,8 +194,7 @@ public class FinanceService {
     }
 
     private FinancialAccountResponse mapFinancialAccountToResponse(FinancialAccountEntity entity) {
-        if (entity == null)
-            return null;
+        if (entity == null) return null;
 
         if (entity.getAccountType() == AccountType.CASH) {
             CashAccountResponse cash = new CashAccountResponse();
@@ -177,44 +207,40 @@ public class FinanceService {
             mobile.setAmount(entity.getAmount());
             mobile.setHolderName(entity.getHolderName());
             mobile.setMobileBankingService(entity.getMobileBankingService());
-            mobile.setMobileNumber(entity.getMobileNumber() != null ? Integer.parseInt(entity.getMobileNumber()) : 0);
+            // conversion sécurisée du numéro de téléphone
+            String mobileNumber = entity.getMobileNumber();
+            if (mobileNumber != null && !mobileNumber.isEmpty()) {
+                try {
+                    mobile.setMobileNumber(Integer.parseInt(mobileNumber));
+                } catch (NumberFormatException e) {
+                    mobile.setMobileNumber(0);
+                }
+            } else {
+                mobile.setMobileNumber(0);
+            }
             return mobile;
-        } else {
+        } else { 
             BankAccountResponse bank = new BankAccountResponse();
             bank.setId(entity.getId());
             bank.setAmount(entity.getAmount());
             bank.setHolderName(entity.getHolderName());
             bank.setBankName(entity.getBankName());
-            bank.setBankCode(entity.getBankCode() != null ? Integer.parseInt(entity.getBankCode()) : 0);
-            bank.setBankBranchCode(
-                    entity.getBankBranchCode() != null ? Integer.parseInt(entity.getBankBranchCode()) : 0);
-            bank.setBankAccountNumber(
-                    entity.getBankAccountNumber() != null ? Integer.parseInt(entity.getBankAccountNumber()) : 0);
-            bank.setBankAccountKey(
-                    entity.getBankAccountKey() != null ? Integer.parseInt(entity.getBankAccountKey()) : 0);
+            bank.setBankCode(parseIntSafe(entity.getBankCode()));
+            bank.setBankBranchCode(parseIntSafe(entity.getBankBranchCode()));
+            bank.setBankAccountNumber(parseIntSafe(entity.getBankAccountNumber()));
+            bank.setBankAccountKey(parseIntSafe(entity.getBankAccountKey()));
             return bank;
         }
     }
 
-    public List<FinancialAccountResponse> getFinancialAccountsAtDate(String collectivityId, LocalDate at) {
-        if (collectivityRepository.findById(collectivityId) == null) {
-            throw new NotFoundException("Collectivity not found");
+    private int parseIntSafe(String value) {
+        if (value != null && !value.isEmpty()) {
+            try {
+                return Integer.parseInt(value);
+            } catch (NumberFormatException e) {
+                return 0;
+            }
         }
-
-        List<FinancialAccountEntity> accounts = financialAccountRepository.findByCollectivityId(collectivityId);
-        List<FinancialAccountResponse> responses = new ArrayList<>();
-
-        for (FinancialAccountEntity account : accounts) {
-            Double totalAfter = transactionRepository.sumAmountByAccountAfterDate(account.getId(), at);
-            double balanceAtDate = account.getAmount() - (totalAfter != null ? totalAfter : 0.0);
-
-            FinancialAccountEntity adjustedAccount = new FinancialAccountEntity();
-            BeanUtils.copyProperties(account, adjustedAccount);
-            adjustedAccount.setAmount(balanceAtDate);
-
-            responses.add(mapFinancialAccountToResponse(adjustedAccount));
-        }
-        return responses;
+        return 0;
     }
-
 }

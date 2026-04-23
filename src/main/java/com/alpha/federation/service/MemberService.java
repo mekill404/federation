@@ -67,7 +67,7 @@ public class MemberService {
 
         MemberEntity newMember = memberMapper.toEntity(request);
         newMember = memberRepository.save(newMember);
-        memberRepository.saveReferees(newMember.getId(), request.getReferees());
+        memberRepository.saveReferees(newMember.getId(), request.getReferees(), targetCollectivityId);
 
         collectivityRepository.addMembership(targetCollectivityId, newMember.getId(), "JUNIOR");
 
