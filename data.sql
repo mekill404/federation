@@ -350,3 +350,20 @@ ALTER TABLE "Presence" ADD FOREIGN KEY ("member_id") REFERENCES "member" ("id") 
 ALTER TABLE "Presence" ADD FOREIGN KEY ("collectivite_origine_id") REFERENCES "collectivity" ("id") DEFERRABLE INITIALLY IMMEDIATE;
 
 ALTER TABLE "financial_account_federation" ADD FOREIGN KEY ("federation_id") REFERENCES "Federation" ("id") DEFERRABLE INITIALLY IMMEDIATE;
+
+ALTER TABLE referees ADD CONSTRAINT check_candidate_not_referee CHECK (candidate_id <> referee_id);
+
+ALTER TABLE financial_account 
+ADD CONSTRAINT check_bank_fields 
+CHECK (
+  (account_type = 'BANK' AND bank_name IS NOT NULL AND bank_code IS NOT NULL AND bank_branch_code IS NOT NULL AND bank_account_number IS NOT NULL AND bank_account_key IS NOT NULL)
+  OR (account_type != 'BANK')
+);
+
+
+ALTER TABLE financial_account 
+ADD CONSTRAINT check_mobile_fields 
+CHECK (
+  (account_type = 'MOBILE_MONEY' AND mobile_banking_service IS NOT NULL AND mobile_number IS NOT NULL)
+  OR (account_type != 'MOBILE_MONEY')
+);
