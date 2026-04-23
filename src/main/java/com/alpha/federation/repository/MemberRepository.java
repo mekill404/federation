@@ -49,15 +49,13 @@ public class MemberRepository {
 	}
 
 	public void saveReferees(String candidateId, List<String> refereeIds, String targetCollectivityId) {
-		String sql = "INSERT INTO referees (id, candidate_id, referee_id, target_collectivity_id) VALUES (?, ?, ?, ?)";
+		String sql = "INSERT INTO referees (candidate_id, referee_id, target_collectivity_id) VALUES (?, ?, ?)";
 		try (Connection conn = dbConnection.getConnection();
-			PreparedStatement pstmt = conn.prepareStatement(sql)) {
+				PreparedStatement pstmt = conn.prepareStatement(sql)) {
 			for (String refId : refereeIds) {
-				String id = candidateId + "_" + refId;
-				pstmt.setString(1, id);
-				pstmt.setString(2, candidateId);
-				pstmt.setString(3, refId);
-				pstmt.setString(4, targetCollectivityId);
+				pstmt.setString(1, candidateId);
+				pstmt.setString(2, refId);
+				pstmt.setString(3, targetCollectivityId);
 				pstmt.addBatch();
 			}
 			pstmt.executeBatch();
