@@ -16,19 +16,19 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MemberController {
 
-    private final MemberService memberService;
-    private final FinanceService financeService;
+	private final MemberService memberService;
+	private final FinanceService financeService;
 
-    @PostMapping 
-    @ResponseStatus(HttpStatus.CREATED)
-    public List<MemberResponse> createMembers(@RequestBody List<CreateMemberRequest> requests) {
-        return memberService.registerMembers(requests);
-    }
+	@PostMapping
+	@ResponseStatus(HttpStatus.CREATED)
+	public List<MemberResponse> createMembers(@RequestBody List<CreateMemberRequest> requests) {
+		return memberService.registerMembers(requests);
+	}
 
-    @PostMapping("/{id}/payments")
-    @ResponseStatus(HttpStatus.CREATED)
-    public List<MemberPaymentResponse> addPayments(@PathVariable String id,
-                                                   @RequestBody List<CreateMemberPaymentRequest> requests) {
-        return financeService.addPayments(id, requests);
-    }
+	@PostMapping("/{id}/payments")
+	@ResponseStatus(HttpStatus.CREATED)
+	public List<MemberPaymentResponse> addPayments(@PathVariable String id,
+			@RequestBody List<CreateMemberPaymentRequest> requests) {
+		return financeService.addPayments(id, requests);
+	}
 }

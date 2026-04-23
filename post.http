@@ -1,0 +1,21 @@
+@baseUrl = http://localhost:8080
+@collectivity1 = col-1
+@collectivity2 = col-2
+@collectivity3 = col-3
+
+### ----------------------------------------------------------
+### CONCERNANT LES COLLECTIVITÉS
+### ----------------------------------------------------------
+
+### [GET] Récupérer une collectivité avec ses membres (doit renvoyer 8 membres pour col-1)
+GET {{baseUrl}}/collectivities/{{collectivity1}}
+
+### [GET] Récupérer col-2
+GET {{baseUrl}}/collectivities/{{collectivity2}}
+
+### [GET] Récupérer col-3 (mêmes vérifications)
+GET {{baseUrl}}/collectivities/{{collectivity3}}
+
+### [PUT] Attribuer numéro/nom (si déjà fait, doit renvoyer 409 Conflict)
+PUT {{baseUrl}}/collectivities/{{collectivity1}}/informations
+Content

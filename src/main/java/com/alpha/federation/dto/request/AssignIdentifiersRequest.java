@@ -4,10 +4,11 @@ import lombok.Getter;
 import lombok.Setter;
 import jakarta.validation.constraints.NotBlank;
 
-@Getter @Setter
+@Getter
+@Setter
 public class AssignIdentifiersRequest {
-    @NotBlank
-    private String uniqueNumber;
-    @NotBlank
-    private String uniqueName;
+	@NotBlank
+	private String uniqueNumber;
+	@NotBlank
+	private String uniqueName;
 }

@@ -4,10 +4,11 @@ import lombok.Getter;
 import lombok.Setter;
 import com.alpha.federation.model.enums.PaymentMode;
 
-@Getter @Setter
+@Getter
+@Setter
 public class CreateMemberPaymentRequest {
-    private Integer amount;
-    private String membershipFeeIdentifier;
-    private String accountCreditedIdentifier;
-    private PaymentMode paymentMode;
+	private Integer amount;
+	private String membershipFeeIdentifier;
+	private String accountCreditedIdentifier;
+	private PaymentMode paymentMode;
 }

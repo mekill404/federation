@@ -16,48 +16,49 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CollectivityController {
 
-    private final CollectivityService collectivityService;
-    private final FinanceService financeService;
+	private final CollectivityService collectivityService;
+	private final FinanceService financeService;
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public List<CollectivityResponse> createCollectivities(@RequestBody List<CreateCollectivityRequest> requests) {
-        return collectivityService.createCollectivities(requests);
-    }
+	@PostMapping
+	@ResponseStatus(HttpStatus.CREATED)
+	public List<CollectivityResponse> createCollectivities(@RequestBody List<CreateCollectivityRequest> requests) {
+		return collectivityService.createCollectivities(requests);
+	}
 
-    @PutMapping("/{id}/informations")
-    public CollectivityResponse updateInformations(@PathVariable String id,
-                                                   @RequestBody CollectivityInformationRequest request) {
-        return collectivityService.assignInformations(id, request);
-    }
+	@PutMapping("/{id}/informations")
+	public CollectivityResponse updateInformations(@PathVariable String id,
+			@RequestBody CollectivityInformationRequest request) {
+		return collectivityService.assignInformations(id, request);
+	}
 
-    @GetMapping("/{id}/membershipFees")
-    public List<MembershipFeeResponse> getMembershipFees(@PathVariable String id) {
-        return financeService.getMembershipFees(id);
-    }
+	@GetMapping("/{id}/membershipFees")
+	public List<MembershipFeeResponse> getMembershipFees(@PathVariable String id) {
+		return financeService.getMembershipFees(id);
+	}
 
-    @PostMapping("/{id}/membershipFees")
-    public List<MembershipFeeResponse> createMembershipFees(@PathVariable String id,
-                                                            @RequestBody List<CreateMembershipFeeRequest> requests) {
-        return financeService.createMembershipFees(id, requests);
-    }
+	@PostMapping("/{id}/membershipFees")
+	public List<MembershipFeeResponse> createMembershipFees(@PathVariable String id,
+			@RequestBody List<CreateMembershipFeeRequest> requests) {
+		return financeService.createMembershipFees(id, requests);
+	}
 
-    @GetMapping("/{id}/transactions")
-    public List<CollectivityTransactionResponse> getTransactions(
-            @PathVariable String id,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
-        return financeService.getTransactions(id, from, to);
-    }
-    @GetMapping("/{id}")
-    public CollectivityResponse getCollectivityById(@PathVariable String id) {
-        return collectivityService.getCollectivityById(id);
-    }
+	@GetMapping("/{id}/transactions")
+	public List<CollectivityTransactionResponse> getTransactions(
+			@PathVariable String id,
+			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
+		return financeService.getTransactions(id, from, to);
+	}
 
-    @GetMapping("/{id}/financialAccounts")
-    public List<FinancialAccountResponse> getFinancialAccounts(
-            @PathVariable String id,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate at) {
-        return financeService.getFinancialAccountsAtDate(id, at);
-    }
+	@GetMapping("/{id}")
+	public CollectivityResponse getCollectivityById(@PathVariable String id) {
+		return collectivityService.getCollectivityById(id);
+	}
+
+	@GetMapping("/{id}/financialAccounts")
+	public List<FinancialAccountResponse> getFinancialAccounts(
+			@PathVariable String id,
+			@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate at) {
+		return financeService.getFinancialAccountsAtDate(id, at);
+	}
 }

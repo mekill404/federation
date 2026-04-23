@@ -4,7 +4,8 @@ import com.alpha.federation.model.enums.Bank;
 import lombok.Getter;
 import lombok.Setter;
 
-@Getter @Setter
+@Getter
+@Setter
 public class BankAccountResponse extends FinancialAccountResponse {
     private String holderName;
     private Bank bankName;

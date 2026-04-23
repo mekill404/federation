@@ -6,9 +6,8 @@ import io.github.cdimascio.dotenv.Dotenv;
 
 @Configuration
 public class DotenvConfig {
-    public DotenvConfig() {
-        Dotenv dotenv = Dotenv.load();
-        dotenv.entries().forEach(entry -> System.setProperty(entry.getKey(), entry.getValue()));
-    }
+	public DotenvConfig() {
+		Dotenv dotenv = Dotenv.load();
+		dotenv.entries().forEach(entry -> System.setProperty(entry.getKey(), entry.getValue()));
+	}
 }
-
