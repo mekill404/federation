@@ -21,7 +21,7 @@ public class CollectivityTransactionRepository {
     public CollectivityTransactionEntity save(CollectivityTransactionEntity transaction) {
         String sql = "INSERT INTO collectivity_transaction (id, collectivity_id, member_debited_id, amount, payment_mode, account_credited_id, creation_date) "
                 +
-                "VALUES (?, ?::uuid, ?::uuid, ?, ?::payment_mode, ?::uuid, ?)";
+                "VALUES (?, ?, ?, ?, ?::payment_mode, ?, ?)";
         try (Connection conn = dbConnection.getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
             transaction.setId(UUID.randomUUID().toString());
@@ -42,7 +42,7 @@ public class CollectivityTransactionRepository {
     public List<CollectivityTransactionEntity> findByCollectivityIdAndPeriod(String collectivityId, LocalDate from,
             LocalDate to) {
         List<CollectivityTransactionEntity> list = new ArrayList<>();
-        String sql = "SELECT * FROM collectivity_transaction WHERE collectivity_id = ?::uuid AND creation_date BETWEEN ? AND ?";
+        String sql = "SELECT * FROM collectivity_transaction WHERE collectivity_id = ? AND creation_date BETWEEN ? AND ?";
         try (Connection conn = dbConnection.getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, collectivityId);
@@ -71,7 +71,7 @@ public class CollectivityTransactionRepository {
     }
 
     public Double sumAmountByAccountAfterDate(String accountId, LocalDate afterDate) {
-        String sql = "SELECT SUM(amount) FROM collectivity_transaction WHERE account_credited_id = ?::uuid AND creation_date > ?";
+        String sql = "SELECT SUM(amount) FROM collectivity_transaction WHERE account_credited_id = ? AND creation_date > ?";
         try (Connection conn = dbConnection.getConnection();
                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, accountId);

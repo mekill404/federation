@@ -63,7 +63,7 @@ public class CollectivityRepository {
 	}
 
 	public String findCollectivityIdByMemberId(String memberId) {
-		String sql = "SELECT collectivity_id FROM membership WHERE member_id = ?::uuid AND left_at IS NULL LIMIT 1";
+		String sql = "SELECT collectivity_id FROM membership WHERE member_id = ? AND left_at IS NULL LIMIT 1";
 		try (Connection conn = dbConnection.getConnection();
 				PreparedStatement pstmt = conn.prepareStatement(sql)) {
 			pstmt.setString(1, memberId);
@@ -125,7 +125,7 @@ public class CollectivityRepository {
 
 	public CollectivityEntity findById(String id) {
 
-		String sql = "SELECT * FROM collectivity WHERE id = ?::uuid";
+		String sql = "SELECT * FROM collectivity WHERE id = ?";
 		try (Connection conn = dbConnection.getConnection();
 				PreparedStatement pstmt = conn.prepareStatement(sql)) {
 			pstmt.setString(1, id);
