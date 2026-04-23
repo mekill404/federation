@@ -19,6 +19,7 @@ public class MemberController {
     private final MemberService memberService;
     private final FinanceService financeService;
 
+    @PostMapping 
     @ResponseStatus(HttpStatus.CREATED)
     public List<MemberResponse> createMembers(@RequestBody List<CreateMemberRequest> requests) {
         return memberService.registerMembers(requests);
