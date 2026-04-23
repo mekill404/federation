@@ -137,4 +137,12 @@ public class CollectivityService {
         collectivityRepository.updateIdentifiers(collectivityId, uniqueNumber, request.getName());
         return collectivityMapper.toResponse(collectivityRepository.findById(collectivityId));
     }
+
+    public CollectivityResponse getCollectivityById(String id) {
+    CollectivityEntity entity = collectivityRepository.findById(id);
+    if (entity == null) {
+        throw new NotFoundException("Collectivity not found with id: " + id);
+    }
+    return collectivityMapper.toResponse(entity);
+}
 }
