@@ -20,7 +20,7 @@ public class MembershipFeeRepository {
 
     public MembershipFeeEntity save(MembershipFeeEntity fee) {
         String sql = "INSERT INTO membership_fee (id, collectivity_id, label, amount, frequency, eligible_from, status) " +
-                     "VALUES (?, ?::uuid, ?, ?, ?::frequency, ?, ?::activity_status)";
+                     "VALUES (?, ?, ?, ?, ?::frequency, ?, ?::activity_status)";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             fee.setId(UUID.randomUUID().toString());
@@ -40,7 +40,7 @@ public class MembershipFeeRepository {
 
     public List<MembershipFeeEntity> findByCollectivityId(String collectivityId) {
         List<MembershipFeeEntity> fees = new ArrayList<>();
-        String sql = "SELECT * FROM membership_fee WHERE collectivity_id = ?::uuid";
+        String sql = "SELECT * FROM membership_fee WHERE collectivity_id = ?";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, collectivityId);
@@ -54,7 +54,7 @@ public class MembershipFeeRepository {
     }
 
     public MembershipFeeEntity findById(String id) {
-        String sql = "SELECT * FROM membership_fee WHERE id = ?::uuid";
+        String sql = "SELECT * FROM membership_fee WHERE id = ?";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, id);

@@ -23,7 +23,7 @@ public class FinancialAccountRepository {
         String sql = "INSERT INTO financial_account (id, collectivity_id, account_type, holder_name, amount, " +
                      "bank_name, bank_code, bank_branch_code, bank_account_number, bank_account_key, " +
                      "mobile_banking_service, mobile_number) " +
-                     "VALUES (?, ?::uuid, ?::account_type, ?, ?, ?::bank_name, ?, ?, ?, ?, ?::mobile_banking_service, ?)";
+                     "VALUES (?, ?, ?::account_type, ?, ?, ?::bank_name, ?, ?, ?, ?, ?::mobile_banking_service, ?)";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             account.setId(UUID.randomUUID().toString());
@@ -49,7 +49,7 @@ public class FinancialAccountRepository {
     }
 
     public FinancialAccountEntity findById(String id) {
-        String sql = "SELECT * FROM financial_account WHERE id = ?::uuid";
+        String sql = "SELECT * FROM financial_account WHERE id = ?";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, id);
@@ -64,7 +64,7 @@ public class FinancialAccountRepository {
 
     public List<FinancialAccountEntity> findByCollectivityId(String collectivityId) {
         List<FinancialAccountEntity> list = new ArrayList<>();
-        String sql = "SELECT * FROM financial_account WHERE collectivity_id = ?::uuid";
+        String sql = "SELECT * FROM financial_account WHERE collectivity_id = ?";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, collectivityId);
@@ -78,7 +78,7 @@ public class FinancialAccountRepository {
     }
 
     public void updateAmount(String accountId, double newAmount) {
-        String sql = "UPDATE financial_account SET amount = ? WHERE id = ?::uuid";
+        String sql = "UPDATE financial_account SET amount = ? WHERE id = ?";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setDouble(1, newAmount);

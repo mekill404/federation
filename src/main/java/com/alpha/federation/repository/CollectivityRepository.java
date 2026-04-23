@@ -125,7 +125,7 @@ public class CollectivityRepository {
 
 	public CollectivityEntity findById(String id) {
 
-		String sql = "SELECT * FROM collectivity WHERE id = ?";
+		String sql = "SELECT * FROM collectivity WHERE id = ?::uuid";
 		try (Connection conn = dbConnection.getConnection();
 				PreparedStatement pstmt = conn.prepareStatement(sql)) {
 			pstmt.setString(1, id);

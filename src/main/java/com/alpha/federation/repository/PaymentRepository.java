@@ -16,7 +16,7 @@ public class PaymentRepository {
 
     public PaymentEntity save(PaymentEntity payment) {
         String sql = "INSERT INTO payment (id, member_id, membership_fee_id, amount, payment_mode, account_credited_id, creation_date) " +
-                     "VALUES (?, ?::uuid, ?::uuid, ?, ?::payment_mode, ?::uuid, ?)";
+                     "VALUES (?, ?, ?, ?, ?::payment_mode, ?, ?)";
         try (Connection conn = dbConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             payment.setId(UUID.randomUUID().toString());

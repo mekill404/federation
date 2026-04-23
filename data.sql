@@ -1,369 +1,296 @@
-CREATE TYPE "gender" AS ENUM (
-  'MALE',
-  'FEMALE'
+-- ============================================================
+-- SUPPRESSION DE L'ANCIENNE BASE (optionnel)
+-- ============================================================
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;
+
+-- ============================================================
+-- TYPES ENUM (inchangés)
+-- ============================================================
+CREATE TYPE gender AS ENUM ('MALE', 'FEMALE');
+CREATE TYPE member_occupation AS ENUM ('JUNIOR', 'SENIOR', 'SECRETARY', 'TREASURER', 'VICE_PRESIDENT', 'PRESIDENT');
+CREATE TYPE frequency AS ENUM ('WEEKLY', 'MONTHLY', 'ANNUALLY', 'PUNCTUALLY');
+CREATE TYPE activity_status AS ENUM ('ACTIVE', 'INACTIVE');
+CREATE TYPE payment_mode AS ENUM ('CASH', 'MOBILE_BANKING', 'BANK_TRANSFER');
+CREATE TYPE mobile_banking_service AS ENUM ('AIRTEL_MONEY', 'MVOLA', 'ORANGE_MONEY');
+CREATE TYPE bank_name AS ENUM ('BRED', 'MCB', 'BMOI', 'BOA', 'BGFI', 'AFG', 'ACCES_BANQUE', 'BAOBAB', 'SIPEM');
+CREATE TYPE account_type AS ENUM ('CASH', 'MOBILE_MONEY', 'BANK');
+
+-- ============================================================
+-- TABLES AVEC ID DE TYPE VARCHAR
+-- ============================================================
+
+CREATE TABLE Ville (
+    id VARCHAR(50) PRIMARY KEY,
+    nom VARCHAR(100) UNIQUE NOT NULL
 );
 
-CREATE TYPE "member_occupation" AS ENUM (
-  'JUNIOR',
-  'SENIOR',
-  'SECRETARY',
-  'TREASURER',
-  'VICE_PRESIDENT',
-  'PRESIDENT'
+CREATE TABLE SpecialiteAgricole (
+    id VARCHAR(50) PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    libelle VARCHAR(200) NOT NULL
 );
 
-CREATE TYPE "frequency" AS ENUM (
-  'WEEKLY',
-  'MONTHLY',
-  'ANNUALLY',
-  'PUNCTUALLY'
+CREATE TABLE Federation (
+    id VARCHAR(50) PRIMARY KEY,
+    nom VARCHAR(200) NOT NULL DEFAULT 'Fédération des Collectivités Agricoles de Madagascar',
+    sigle VARCHAR(50),
+    date_creation DATE DEFAULT CURRENT_DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TYPE "activity_status" AS ENUM (
-  'ACTIVE',
-  'INACTIVE'
+CREATE TABLE member (
+    id VARCHAR(50) PRIMARY KEY,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    birth_date DATE NOT NULL,
+    gender gender NOT NULL,
+    address TEXT NOT NULL,
+    profession VARCHAR(200) NOT NULL,
+    phone_number VARCHAR(20) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    occupation member_occupation NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TYPE "payment_mode" AS ENUM (
-  'CASH',
-  'MOBILE_BANKING',
-  'BANK_TRANSFER'
+CREATE TABLE collectivity (
+    id VARCHAR(50) PRIMARY KEY,
+    location VARCHAR(200) NOT NULL,
+    federation_approval BOOLEAN DEFAULT FALSE,
+    approval_date DATE,
+    unique_number VARCHAR(50) UNIQUE,
+    unique_name VARCHAR(200) UNIQUE,
+    date_creation DATE DEFAULT CURRENT_DATE,
+    id_ville VARCHAR(50) REFERENCES Ville(id),
+    id_specialite VARCHAR(50) REFERENCES SpecialiteAgricole(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TYPE "mobile_banking_service" AS ENUM (
-  'AIRTEL_MONEY',
-  'MVOLA',
-  'ORANGE_MONEY'
+CREATE TABLE membership (
+    id VARCHAR(50) PRIMARY KEY,
+    member_id VARCHAR(50) NOT NULL REFERENCES member(id),
+    collectivity_id VARCHAR(50) NOT NULL REFERENCES collectivity(id),
+    role_in_collectivity member_occupation NOT NULL,
+    joined_at DATE DEFAULT CURRENT_DATE,
+    left_at DATE,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(member_id, collectivity_id)
 );
 
-CREATE TYPE "bank_name" AS ENUM (
-  'BRED',
-  'MCB',
-  'BMOI',
-  'BOA',
-  'BGFI',
-  'AFG',
-  'ACCES_BANQUE',
-  'BAOBAB',
-  'SIPEM'
+CREATE TABLE referees (
+    id VARCHAR(50) PRIMARY KEY,
+    candidate_id VARCHAR(50) NOT NULL REFERENCES member(id),
+    referee_id VARCHAR(50) NOT NULL REFERENCES member(id),
+    target_collectivity_id VARCHAR(50) NOT NULL REFERENCES collectivity(id),
+    relationship_nature VARCHAR(50),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(candidate_id, referee_id),
+    CHECK (candidate_id <> referee_id)
 );
 
-CREATE TYPE "account_type" AS ENUM (
-  'CASH',
-  'MOBILE_MONEY',
-  'BANK'
+CREATE TABLE collectivity_structure (
+    id VARCHAR(50) PRIMARY KEY,
+    collectivity_id VARCHAR(50) NOT NULL REFERENCES collectivity(id),
+    mandat_year INT NOT NULL,
+    president_id VARCHAR(50) NOT NULL REFERENCES member(id),
+    vice_president_id VARCHAR(50) NOT NULL REFERENCES member(id),
+    treasurer_id VARCHAR(50) NOT NULL REFERENCES member(id),
+    secretary_id VARCHAR(50) NOT NULL REFERENCES member(id),
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(collectivity_id, mandat_year)
 );
 
-CREATE TYPE "mandat_entity_type" AS ENUM (
-  'COLLECTIVITY',
-  'FEDERATION'
+CREATE TABLE financial_account (
+    id VARCHAR(50) PRIMARY KEY,
+    collectivity_id VARCHAR(50) NOT NULL REFERENCES collectivity(id),
+    account_type account_type NOT NULL,
+    holder_name VARCHAR(200),
+    amount DECIMAL(15,2) DEFAULT 0,
+    bank_name bank_name,
+    bank_code VARCHAR(5),
+    bank_branch_code VARCHAR(5),
+    bank_account_number VARCHAR(11),
+    bank_account_key VARCHAR(2),
+    mobile_banking_service mobile_banking_service,
+    mobile_number VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE "Ville" (
-  "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "nom" varchar(100) UNIQUE NOT NULL
+CREATE TABLE membership_fee (
+    id VARCHAR(50) PRIMARY KEY,
+    collectivity_id VARCHAR(50) NOT NULL REFERENCES collectivity(id),
+    label VARCHAR(200) NOT NULL,
+    amount DECIMAL(15,2) NOT NULL,
+    frequency frequency NOT NULL,
+    eligible_from DATE NOT NULL,
+    status activity_status DEFAULT 'ACTIVE',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE "SpecialiteAgricole" (
-  "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "code" varchar(50) UNIQUE NOT NULL,
-  "libelle" varchar(200) NOT NULL
+CREATE TABLE payment (
+    id VARCHAR(50) PRIMARY KEY,
+    member_id VARCHAR(50) NOT NULL REFERENCES member(id),
+    membership_fee_id VARCHAR(50) REFERENCES membership_fee(id),
+    amount DECIMAL(15,2) NOT NULL,
+    payment_mode payment_mode NOT NULL,
+    account_credited_id VARCHAR(50) NOT NULL REFERENCES financial_account(id),
+    creation_date DATE DEFAULT CURRENT_DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE "Federation" (
-  "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "nom" varchar(200) NOT NULL DEFAULT 'Fédération des Collectivités Agricoles de Madagascar',
-  "sigle" varchar(50),
-  "date_creation" date DEFAULT (CURRENT_DATE),
-  "created_at" timestamp DEFAULT (CURRENT_TIMESTAMP),
-  "updated_at" timestamp DEFAULT (CURRENT_TIMESTAMP)
+CREATE TABLE collectivity_transaction (
+    id VARCHAR(50) PRIMARY KEY,
+    collectivity_id VARCHAR(50) NOT NULL REFERENCES collectivity(id),
+    member_debited_id VARCHAR(50) NOT NULL REFERENCES member(id),
+    amount DECIMAL(15,2) NOT NULL,
+    payment_mode payment_mode NOT NULL,
+    account_credited_id VARCHAR(50) NOT NULL REFERENCES financial_account(id),
+    creation_date DATE DEFAULT CURRENT_DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE "member" (
-  "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "first_name" varchar(100) NOT NULL,
-  "last_name" varchar(100) NOT NULL,
-  "birth_date" date NOT NULL,
-  "gender" gender NOT NULL,
-  "address" text NOT NULL,
-  "profession" varchar(200) NOT NULL,
-  "phone_number" varchar(20) UNIQUE NOT NULL,
-  "email" varchar(255) UNIQUE NOT NULL,
-  "occupation" member_occupation NOT NULL,
-  "created_at" timestamp DEFAULT (CURRENT_TIMESTAMP),
-  "updated_at" timestamp DEFAULT (CURRENT_TIMESTAMP)
-);
+-- ============================================================
+-- INSERTION DES DONNÉES DE TEST (IDENTIFIANTS DU SUJET)
+-- ============================================================
 
-CREATE TABLE "collectivity" (
-  "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "location" varchar(200) NOT NULL,
-  "federation_approval" boolean DEFAULT false,
-  "approval_date" date,
-  "unique_number" varchar(50) UNIQUE,
-  "unique_name" varchar(200) UNIQUE,
-  "date_creation" date DEFAULT (CURRENT_DATE),
-  "id_ville" uuid,
-  "id_specialite" uuid,
-  "created_at" timestamp DEFAULT (CURRENT_TIMESTAMP),
-  "updated_at" timestamp DEFAULT (CURRENT_TIMESTAMP)
-);
+INSERT INTO Ville (id, nom) VALUES ('Ambatondrazaka', 'Ambatondrazaka'), ('Brickaville', 'Brickaville');
+INSERT INTO SpecialiteAgricole (id, code, libelle) VALUES ('RIZ', 'RIZ', 'Riziculture'), ('PISC', 'PISC', 'Pisciculture'), ('API', 'API', 'Apiculture');
+INSERT INTO Federation (id, nom, sigle) VALUES ('fed-1', 'Fédération Nationale', 'FNM');
 
-CREATE TABLE "membership" (
-  "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "member_id" uuid NOT NULL,
-  "collectivity_id" uuid NOT NULL,
-  "role_in_collectivity" member_occupation NOT NULL,
-  "joined_at" date DEFAULT (CURRENT_DATE),
-  "left_at" date,
-  "is_active" boolean DEFAULT true,
-  "created_at" timestamp DEFAULT (CURRENT_TIMESTAMP),
-  "updated_at" timestamp DEFAULT (CURRENT_TIMESTAMP)
-);
+INSERT INTO collectivity (id, location, federation_approval, approval_date, unique_number, unique_name, date_creation, id_ville, id_specialite) VALUES
+('col-1', 'Ambatondrazaka Centre', true, '2026-01-01', '1', 'Mpanorina', '2026-01-01', 'Ambatondrazaka', 'RIZ'),
+('col-2', 'Ambatondrazaka Nord', true, '2026-01-01', '2', 'Dobo voalahany', '2026-01-01', 'Ambatondrazaka', 'PISC'),
+('col-3', 'Brickaville', true, '2026-01-01', '3', 'Tantely mamy', '2026-01-01', 'Brickaville', 'API');
 
-CREATE TABLE "referees" (
-  "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "candidate_id" uuid NOT NULL,
-  "referee_id" uuid NOT NULL,
-  "target_collectivity_id" uuid NOT NULL,
-  "relationship_nature" varchar(50),
-  "created_at" timestamp DEFAULT (CURRENT_TIMESTAMP)
-);
+-- Membres col-1
+INSERT INTO member (id, first_name, last_name, birth_date, gender, address, profession, phone_number, email, occupation, created_at) VALUES
+('C1-M1', 'Nom membre 1', 'Prénom membre 1', '1980-02-01', 'MALE', 'Lot II V M Ambato.', 'Riziculteur', '0341234567', 'member.1@fed-agri.mg', 'PRESIDENT', '2024-01-01'),
+('C1-M2', 'Nom membre 2', 'Prénom membre 2', '1982-03-05', 'MALE', 'Lot II F Ambato.', 'Agriculteur', '0321234567', 'member.2@fed-agri.mg', 'VICE_PRESIDENT', '2024-01-01'),
+('C1-M3', 'Nom membre 3', 'Prénom membre 3', '1992-03-10', 'MALE', 'Lot II J Ambato.', 'Collecteur', '0331234567', 'member.3@fed-agrimg', 'SECRETARY', '2024-01-01'),
+('C1-M4', 'Nom membre 4', 'Prénom membre 4', '1988-05-22', 'FEMALE', 'Lot A K 50 Ambato.', 'Distributeur', '0381234567', 'member.4@fed-agri.mg', 'TREASURER', '2024-01-01'),
+('C1-M5', 'Nom membre 5', 'Prénom membre 5', '1999-08-21', 'MALE', 'Lot UV 80 Ambato.', 'Riziculteur', '0373434567', 'member.5@fed-agri.mg', 'SENIOR', '2024-01-01'),
+('C1-M6', 'Nom membre 6', 'Prénom membre 6', '1998-08-22', 'FEMALE', 'Lot UV 6 Ambato.', 'Riziculteur', '0372234567', 'member.6@fed-agri.mg', 'SENIOR', '2024-01-01'),
+('C1-M7', 'Nom membre 7', 'Prénom membre 7', '1998-01-31', 'MALE', 'Lot UV 7 Ambato.', 'Riziculteur', '0374234567', 'member.7@fed-agri.mg', 'SENIOR', '2024-01-01'),
+('C1-M8', 'Nom membre 8', 'Prénom membre 8', '1975-08-20', 'MALE', 'Lot UV 8 Ambato.', 'Riziculteur', '0370234567', 'member.8@fed-agri.mg', 'SENIOR', '2024-01-01');
 
-CREATE TABLE "Mandat" (
-  "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "entite_type" mandat_entity_type NOT NULL,
-  "id_entite" uuid NOT NULL,
-  "annee_debut" int NOT NULL,
-  "duree_ans" int NOT NULL,
-  "date_debut" date NOT NULL,
-  "date_fin" date NOT NULL,
-  "est_actif" boolean DEFAULT true,
-  "created_at" timestamp DEFAULT (CURRENT_TIMESTAMP),
-  "updated_at" timestamp DEFAULT (CURRENT_TIMESTAMP)
-);
+-- Membres col-2 (certains identiques à col-1 dans le sujet, on garde les mêmes IDs avec préfixe différent ou on les duplique ? 
+-- Le sujet indique "C2-M1 ou C1-M1" ; pour simplifier, on crée des enregistrements distincts avec IDs C2-M1...)
+INSERT INTO member (id, first_name, last_name, birth_date, gender, address, profession, phone_number, email, occupation, created_at) VALUES
+('C2-M1', 'Nom membre 1', 'Prénom membre 1', '1980-02-01', 'MALE', 'Lot II V M Ambato.', 'Riziculteur', '0341234567', 'member.1@fed-agri.mg', 'SENIOR', '2024-01-01'),
+('C2-M2', 'Nom membre 2', 'Prénom membre 2', '1982-03-05', 'MALE', 'Lot II F Ambato.', 'Agriculteur', '0321234567', 'member.2@fed-agri.mg', 'SENIOR', '2024-01-01'),
+('C2-M3', 'Nom membre 3', 'Prénom membre 3', '1992-03-10', 'MALE', 'Lot II J Ambato.', 'Collecteur', '0331234567', 'member.3@fed-agrimg', 'SENIOR', '2024-01-01'),
+('C2-M4', 'Nom membre 4', 'Prénom membre 4', '1988-05-22', 'FEMALE', 'Lot A K 50 Ambato.', 'Distributeur', '0381234567', 'member.4@fed-agri.mg', 'SENIOR', '2024-01-01'),
+('C2-M5', 'Nom membre 5', 'Prénom membre 5', '1999-08-21', 'MALE', 'Lot UV 80 Ambato.', 'Riziculteur', '0373434567', 'member.5@fed-agri.mg', 'PRESIDENT', '2024-01-01'),
+('C2-M6', 'Nom membre 6', 'Prénom membre 6', '1998-08-22', 'FEMALE', 'Lot UV 6 Ambato.', 'Riziculteur', '0372234567', 'member.6@fed-agri.mg', 'VICE_PRESIDENT', '2024-01-01'),
+('C2-M7', 'Nom membre 7', 'Prénom membre 7', '1998-01-31', 'MALE', 'Lot UV 7 Ambato.', 'Riziculteur', '0374234567', 'member.7@fed-agri.mg', 'SECRETARY', '2024-01-01'),
+('C2-M8', 'Nom membre 8', 'Prénom membre 8', '1975-08-20', 'MALE', 'Lot UV 8 Ambato.', 'Riziculteur', '0370234567', 'member.8@fed-agri.mg', 'TREASURER', '2024-01-01');
 
-CREATE TABLE "MandatPoste" (
-  "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "mandat_id" uuid NOT NULL,
-  "member_id" uuid NOT NULL,
-  "poste" member_occupation NOT NULL,
-  "created_at" timestamp DEFAULT (CURRENT_TIMESTAMP)
-);
+-- Membres col-3
+INSERT INTO member (id, first_name, last_name, birth_date, gender, address, profession, phone_number, email, occupation, created_at) VALUES
+('C3-M1', 'Nom membre 9', 'Prénom membre 9', '1988-01-02', 'MALE', 'Lot 33 J Antsirabe', 'Apiculteur', '034034567', 'member.9@fed-agri.mg', 'PRESIDENT', '2024-01-01'),
+('C3-M2', 'Nom membre 10', 'Prénom membre 10', '1982-03-05', 'MALE', 'Lot 2 J Antsirabe', 'Agriculteur', '0338634567', 'member.10@fed-agri.mg', 'VICE_PRESIDENT', '2024-01-01'),
+('C3-M3', 'Nom membre 11', 'Prénom membre 11', '1992-03-12', 'MALE', 'Lot 8 KM Antsirabe', 'Collecteur', '0338234567', 'member.11@fed-agrimg', 'SECRETARY', '2024-01-01'),
+('C3-M4', 'Nom membre 12', 'Prénom membre 12', '1988-05-10', 'FEMALE', 'Lot A K 50 Antsirabe', 'Distributeur', '0382334567', 'member.12@fed-agri.mg', 'TREASURER', '2024-01-01'),
+('C3-M5', 'Nom membre 13', 'Prénom membre 13', '1999-08-11', 'MALE', 'Lot UV 80 Antsirabe.', 'Apiculteur', '0373365567', 'member.13@fed-agri.mg', 'SENIOR', '2024-01-01'),
+('C3-M6', 'Nom membre 14', 'Prénom membre 14', '1998-08-09', 'FEMALE', 'Lot UV 6 Antsirabe.', 'Apiculteur', '0378234567', 'member.14@fed-agri.mg', 'SENIOR', '2024-01-01'),
+('C3-M7', 'Nom membre 15', 'Prénom membre 15', '1998-01-13', 'MALE', 'Lot UV 7 Antsirabe', 'Apiculteur', '0374914567', 'member.15@fed-agri.mg', 'SENIOR', '2024-01-01'),
+('C3-M8', 'Nom membre 16', 'Prénom membre 16', '1975-08-02', 'MALE', 'Lot UV 8 Antsirabe', 'Apiculteur', '0370634567', 'member.16@fed-agri.mg', 'SENIOR', '2024-01-01');
 
-CREATE TABLE "collectivity_structure" (
-  "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "collectivity_id" uuid NOT NULL,
-  "mandat_year" int NOT NULL,
-  "president_id" uuid NOT NULL,
-  "vice_president_id" uuid NOT NULL,
-  "treasurer_id" uuid NOT NULL,
-  "secretary_id" uuid NOT NULL,
-  "start_date" date NOT NULL,
-  "end_date" date NOT NULL,
-  "created_at" timestamp DEFAULT (CURRENT_TIMESTAMP),
-  "updated_at" timestamp DEFAULT (CURRENT_TIMESTAMP)
-);
+-- Adhésions (membership)
+INSERT INTO membership (id, member_id, collectivity_id, role_in_collectivity, joined_at) VALUES
+-- col-1
+('ms11', 'C1-M1', 'col-1', 'PRESIDENT', '2026-01-01'),
+('ms12', 'C1-M2', 'col-1', 'VICE_PRESIDENT', '2026-01-01'),
+('ms13', 'C1-M3', 'col-1', 'SECRETARY', '2026-01-01'),
+('ms14', 'C1-M4', 'col-1', 'TREASURER', '2026-01-01'),
+('ms15', 'C1-M5', 'col-1', 'SENIOR', '2026-01-01'),
+('ms16', 'C1-M6', 'col-1', 'SENIOR', '2026-01-01'),
+('ms17', 'C1-M7', 'col-1', 'SENIOR', '2026-01-01'),
+('ms18', 'C1-M8', 'col-1', 'SENIOR', '2026-01-01'),
+-- col-2
+('ms21', 'C2-M1', 'col-2', 'SENIOR', '2026-01-01'),
+('ms22', 'C2-M2', 'col-2', 'SENIOR', '2026-01-01'),
+('ms23', 'C2-M3', 'col-2', 'SENIOR', '2026-01-01'),
+('ms24', 'C2-M4', 'col-2', 'SENIOR', '2026-01-01'),
+('ms25', 'C2-M5', 'col-2', 'PRESIDENT', '2026-01-01'),
+('ms26', 'C2-M6', 'col-2', 'VICE_PRESIDENT', '2026-01-01'),
+('ms27', 'C2-M7', 'col-2', 'SECRETARY', '2026-01-01'),
+('ms28', 'C2-M8', 'col-2', 'TREASURER', '2026-01-01'),
+-- col-3
+('ms31', 'C3-M1', 'col-3', 'PRESIDENT', '2026-01-01'),
+('ms32', 'C3-M2', 'col-3', 'VICE_PRESIDENT', '2026-01-01'),
+('ms33', 'C3-M3', 'col-3', 'SECRETARY', '2026-01-01'),
+('ms34', 'C3-M4', 'col-3', 'TREASURER', '2026-01-01'),
+('ms35', 'C3-M5', 'col-3', 'SENIOR', '2026-01-01'),
+('ms36', 'C3-M6', 'col-3', 'SENIOR', '2026-01-01'),
+('ms37', 'C3-M7', 'col-3', 'SENIOR', '2026-01-01'),
+('ms38', 'C3-M8', 'col-3', 'SENIOR', '2026-01-01');
 
-CREATE TABLE "financial_account" (
-  "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "collectivity_id" uuid NOT NULL,
-  "account_type" account_type NOT NULL,
-  "holder_name" varchar(200),
-  "amount" decimal(15,2) DEFAULT 0,
-  "bank_name" bank_name,
-  "bank_code" varchar(5),
-  "bank_branch_code" varchar(5),
-  "bank_account_number" varchar(11),
-  "bank_account_key" varchar(2),
-  "mobile_banking_service" mobile_banking_service,
-  "mobile_number" varchar(20),
-  "created_at" timestamp DEFAULT (CURRENT_TIMESTAMP),
-  "updated_at" timestamp DEFAULT (CURRENT_TIMESTAMP)
-);
+-- Structures des bureaux
+INSERT INTO collectivity_structure (id, collectivity_id, mandat_year, president_id, vice_president_id, treasurer_id, secretary_id, start_date, end_date) VALUES
+('struct1', 'col-1', 2026, 'C1-M1', 'C1-M2', 'C1-M4', 'C1-M3', '2026-01-01', '2026-12-31'),
+('struct2', 'col-2', 2026, 'C2-M5', 'C2-M6', 'C2-M8', 'C2-M7', '2026-01-01', '2026-12-31'),
+('struct3', 'col-3', 2026, 'C3-M1', 'C3-M2', 'C3-M4', 'C3-M3', '2026-01-01', '2026-12-31');
 
-CREATE TABLE "membership_fee" (
-  "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "collectivity_id" uuid NOT NULL,
-  "label" varchar(200) NOT NULL,
-  "amount" decimal(15,2) NOT NULL,
-  "frequency" frequency NOT NULL,
-  "eligible_from" date NOT NULL,
-  "status" activity_status DEFAULT 'ACTIVE',
-  "created_at" timestamp DEFAULT (CURRENT_TIMESTAMP),
-  "updated_at" timestamp DEFAULT (CURRENT_TIMESTAMP)
-);
+-- Comptes financiers
+INSERT INTO financial_account (id, collectivity_id, account_type, holder_name, amount, mobile_banking_service, mobile_number) VALUES
+('C1-A-CASH', 'col-1', 'CASH', NULL, 0, NULL, NULL),
+('C1-A-MOBILE-1', 'col-1', 'MOBILE_MONEY', 'Mpanorina', 0, 'ORANGE_MONEY', '0370489612'),
+('C2-A-CASH', 'col-2', 'CASH', NULL, 0, NULL, NULL),
+('C2-A-MOBILE-1', 'col-2', 'MOBILE_MONEY', 'Dobo voalohany', 0, 'ORANGE_MONEY', '0320489612'),
+('C3-A-CASH', 'col-3', 'CASH', NULL, 0, NULL, NULL);
 
-CREATE TABLE "payment" (
-  "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "member_id" uuid NOT NULL,
-  "membership_fee_id" uuid,
-  "amount" decimal(15,2) NOT NULL,
-  "payment_mode" payment_mode NOT NULL,
-  "account_credited_id" uuid NOT NULL,
-  "creation_date" date DEFAULT (CURRENT_DATE),
-  "created_at" timestamp DEFAULT (CURRENT_TIMESTAMP),
-  "updated_at" timestamp DEFAULT (CURRENT_TIMESTAMP)
-);
+-- Cotisations
+INSERT INTO membership_fee (id, collectivity_id, label, amount, frequency, eligible_from, status) VALUES
+('cot-1', 'col-1', 'Cotisation annuelle', 100000, 'ANNUALLY', '2026-01-01', 'ACTIVE'),
+('cot-2', 'col-2', 'Cotisation annuelle', 100000, 'ANNUALLY', '2026-01-01', 'ACTIVE'),
+('cot-3', 'col-3', 'Cotisation annuelle', 50000, 'ANNUALLY', '2026-01-01', 'ACTIVE');
 
-CREATE TABLE "collectivity_transaction" (
-  "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "collectivity_id" uuid NOT NULL,
-  "member_debited_id" uuid NOT NULL,
-  "amount" decimal(15,2) NOT NULL,
-  "payment_mode" payment_mode NOT NULL,
-  "account_credited_id" uuid NOT NULL,
-  "creation_date" date DEFAULT (CURRENT_DATE),
-  "created_at" timestamp DEFAULT (CURRENT_TIMESTAMP),
-  "updated_at" timestamp DEFAULT (CURRENT_TIMESTAMP)
-);
+-- Paiements col-1
+INSERT INTO payment (id, member_id, membership_fee_id, amount, payment_mode, account_credited_id, creation_date) VALUES
+('pay1', 'C1-M1', 'cot-1', 100000, 'CASH', 'C1-A-CASH', '2026-01-01'),
+('pay2', 'C1-M2', 'cot-1', 100000, 'CASH', 'C1-A-CASH', '2026-01-01'),
+('pay3', 'C1-M3', 'cot-1', 100000, 'CASH', 'C1-A-CASH', '2026-01-01'),
+('pay4', 'C1-M4', 'cot-1', 100000, 'CASH', 'C1-A-CASH', '2026-01-01'),
+('pay5', 'C1-M5', 'cot-1', 100000, 'CASH', 'C1-A-CASH', '2026-01-01'),
+('pay6', 'C1-M6', 'cot-1', 100000, 'CASH', 'C1-A-CASH', '2026-01-01'),
+('pay7', 'C1-M7', 'cot-1', 60000, 'CASH', 'C1-A-CASH', '2026-01-01'),
+('pay8', 'C1-M8', 'cot-1', 90000, 'CASH', 'C1-A-CASH', '2026-01-01'),
+-- col-2
+('pay21', 'C2-M1', 'cot-2', 60000, 'CASH', 'C2-A-CASH', '2026-01-01'),
+('pay22', 'C2-M2', 'cot-2', 90000, 'CASH', 'C2-A-CASH', '2026-01-01'),
+('pay23', 'C2-M3', 'cot-2', 100000, 'CASH', 'C2-A-CASH', '2026-01-01'),
+('pay24', 'C2-M4', 'cot-2', 100000, 'CASH', 'C2-A-CASH', '2026-01-01'),
+('pay25', 'C2-M5', 'cot-2', 100000, 'CASH', 'C2-A-CASH', '2026-01-01'),
+('pay26', 'C2-M6', 'cot-2', 100000, 'CASH', 'C2-A-CASH', '2026-01-01'),
+('pay27', 'C2-M7', 'cot-2', 40000, 'MOBILE_BANKING', 'C2-A-MOBILE-1', '2026-01-01'),
+('pay28', 'C2-M8', 'cot-2', 60000, 'MOBILE_BANKING', 'C2-A-MOBILE-1', '2026-01-01');
 
-CREATE TABLE "Activite" (
-  "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "titre" varchar(200) NOT NULL,
-  "description" text,
-  "type_activite" varchar(50) NOT NULL,
-  "date_activite" date NOT NULL,
-  "heure_debut" time,
-  "heure_fin" time,
-  "lieu" varchar(500),
-  "est_obligatoire" boolean DEFAULT false,
-  "public_cible" varchar(200),
-  "collectivity_id" uuid,
-  "federation_id" uuid,
-  "created_at" timestamp DEFAULT (CURRENT_TIMESTAMP),
-  "updated_at" timestamp DEFAULT (CURRENT_TIMESTAMP)
-);
+-- Transactions (générées automatiquement à partir des paiements)
+INSERT INTO collectivity_transaction (id, collectivity_id, member_debited_id, amount, payment_mode, account_credited_id, creation_date)
+SELECT
+    'trans-' || p.id,
+    SUBSTRING(p.id FROM 4 FOR 1) || 'ol-' || SUBSTRING(p.id FROM 5 FOR 1), -- approximation pour obtenir col-1, col-2...
+    p.member_id,
+    p.amount,
+    p.payment_mode,
+    p.account_credited_id,
+    p.creation_date
+FROM payment p;
 
-CREATE TABLE "Presence" (
-  "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "activite_id" uuid NOT NULL,
-  "member_id" uuid NOT NULL,
-  "statut" varchar(20) NOT NULL,
-  "motif_absence" text,
-  "est_membre_externe" boolean DEFAULT false,
-  "collectivite_origine_id" uuid,
-  "created_at" timestamp DEFAULT (CURRENT_TIMESTAMP),
-  "updated_at" timestamp DEFAULT (CURRENT_TIMESTAMP)
-);
-
-CREATE TABLE "financial_account_federation" (
-  "id" uuid PRIMARY KEY DEFAULT (gen_random_uuid()),
-  "federation_id" uuid NOT NULL,
-  "account_type" account_type NOT NULL,
-  "holder_name" varchar(200),
-  "amount" decimal(15,2) DEFAULT 0,
-  "bank_name" bank_name,
-  "bank_code" varchar(5),
-  "bank_branch_code" varchar(5),
-  "bank_account_number" varchar(11),
-  "bank_account_key" varchar(2),
-  "mobile_banking_service" mobile_banking_service,
-  "mobile_number" varchar(20),
-  "created_at" timestamp DEFAULT (CURRENT_TIMESTAMP),
-  "updated_at" timestamp DEFAULT (CURRENT_TIMESTAMP)
-);
-
-CREATE UNIQUE INDEX ON "membership" ("member_id", "collectivity_id");
-
-CREATE UNIQUE INDEX ON "referees" ("candidate_id", "referee_id");
-
-CREATE UNIQUE INDEX ON "MandatPoste" ("mandat_id", "poste");
-
-CREATE UNIQUE INDEX ON "collectivity_structure" ("collectivity_id", "mandat_year");
-
-CREATE UNIQUE INDEX ON "Presence" ("activite_id", "member_id");
-
-COMMENT ON TABLE "member" IS 'occupation = poste global ; peut différer du rôle dans une collectivité';
-
-COMMENT ON TABLE "collectivity" IS 'unique_number et unique_name peuvent être NULL avant attribution';
-
-COMMENT ON TABLE "membership" IS 'Un membre peut changer de collectivité ou démissionner';
-
-COMMENT ON TABLE "referees" IS 'CHECK (candidate_id <> referee_id) ; le parrain doit être MEMBRE_CONFIRME (SENIOR) et avoir >90j d''ancienneté';
-
-COMMENT ON TABLE "Mandat" IS 'Un mandat est défini pour une entité sur une période. Les postes spécifiques sont attribués via MandatPoste.';
-
-COMMENT ON TABLE "MandatPoste" IS 'Limite métier : un membre ne peut occuper le même poste spécifique plus de 2 mandats (total, toute collectivité confondue)';
-
-COMMENT ON TABLE "collectivity_structure" IS 'Table temporaire en attendant l''implémentation complète des mandats';
-
-COMMENT ON TABLE "financial_account" IS 'Contraintes CHECK : les champs bancaires ne sont remplis que pour account_type=''BANK'', idem pour mobile';
-
-COMMENT ON TABLE "collectivity_transaction" IS 'Générée automatiquement à chaque paiement (traçabilité comptable)';
-
-COMMENT ON TABLE "Activite" IS 'Une activité appartient soit à une collectivité, soit à la fédération';
-
-COMMENT ON TABLE "financial_account_federation" IS 'Mêmes règles que pour les comptes des collectivités';
-
-ALTER TABLE "collectivity" ADD FOREIGN KEY ("id_ville") REFERENCES "Ville" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "collectivity" ADD FOREIGN KEY ("id_specialite") REFERENCES "SpecialiteAgricole" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "membership" ADD FOREIGN KEY ("member_id") REFERENCES "member" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "membership" ADD FOREIGN KEY ("collectivity_id") REFERENCES "collectivity" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "referees" ADD FOREIGN KEY ("candidate_id") REFERENCES "member" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "referees" ADD FOREIGN KEY ("referee_id") REFERENCES "member" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "referees" ADD FOREIGN KEY ("target_collectivity_id") REFERENCES "collectivity" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "MandatPoste" ADD FOREIGN KEY ("mandat_id") REFERENCES "Mandat" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "MandatPoste" ADD FOREIGN KEY ("member_id") REFERENCES "member" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "collectivity_structure" ADD FOREIGN KEY ("collectivity_id") REFERENCES "collectivity" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "collectivity_structure" ADD FOREIGN KEY ("president_id") REFERENCES "member" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "collectivity_structure" ADD FOREIGN KEY ("vice_president_id") REFERENCES "member" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "collectivity_structure" ADD FOREIGN KEY ("treasurer_id") REFERENCES "member" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "collectivity_structure" ADD FOREIGN KEY ("secretary_id") REFERENCES "member" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "financial_account" ADD FOREIGN KEY ("collectivity_id") REFERENCES "collectivity" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "membership_fee" ADD FOREIGN KEY ("collectivity_id") REFERENCES "collectivity" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "payment" ADD FOREIGN KEY ("member_id") REFERENCES "member" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "payment" ADD FOREIGN KEY ("membership_fee_id") REFERENCES "membership_fee" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "payment" ADD FOREIGN KEY ("account_credited_id") REFERENCES "financial_account" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "collectivity_transaction" ADD FOREIGN KEY ("collectivity_id") REFERENCES "collectivity" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "collectivity_transaction" ADD FOREIGN KEY ("member_debited_id") REFERENCES "member" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "collectivity_transaction" ADD FOREIGN KEY ("account_credited_id") REFERENCES "financial_account" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "Activite" ADD FOREIGN KEY ("collectivity_id") REFERENCES "collectivity" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "Activite" ADD FOREIGN KEY ("federation_id") REFERENCES "Federation" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "Presence" ADD FOREIGN KEY ("activite_id") REFERENCES "Activite" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "Presence" ADD FOREIGN KEY ("member_id") REFERENCES "member" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "Presence" ADD FOREIGN KEY ("collectivite_origine_id") REFERENCES "collectivity" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE "financial_account_federation" ADD FOREIGN KEY ("federation_id") REFERENCES "Federation" ("id") DEFERRABLE INITIALLY IMMEDIATE;
-
-ALTER TABLE referees ADD CONSTRAINT check_candidate_not_referee CHECK (candidate_id <> referee_id);
-
-ALTER TABLE financial_account 
-ADD CONSTRAINT check_bank_fields 
-CHECK (
-  (account_type = 'BANK' AND bank_name IS NOT NULL AND bank_code IS NOT NULL AND bank_branch_code IS NOT NULL AND bank_account_number IS NOT NULL AND bank_account_key IS NOT NULL)
-  OR (account_type != 'BANK')
-);
-
-
-ALTER TABLE financial_account 
-ADD CONSTRAINT check_mobile_fields 
-CHECK (
-  (account_type = 'MOBILE_MONEY' AND mobile_banking_service IS NOT NULL AND mobile_number IS NOT NULL)
-  OR (account_type != 'MOBILE_MONEY')
-);
+-- Mise à jour des soldes (montants cumulés)
+UPDATE financial_account SET amount = 750000 WHERE id = 'C1-A-CASH';
+UPDATE financial_account SET amount = 650000 WHERE id = 'C2-A-CASH';
+UPDATE financial_account SET amount = 100000 WHERE id = 'C2-A-MOBILE-1';
