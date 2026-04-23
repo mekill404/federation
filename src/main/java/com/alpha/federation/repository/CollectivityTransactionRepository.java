@@ -19,10 +19,11 @@ public class CollectivityTransactionRepository {
     }
 
     public CollectivityTransactionEntity save(CollectivityTransactionEntity transaction) {
-        String sql = "INSERT INTO collectivity_transaction (id, collectivity_id, member_debited_id, amount, payment_mode, account_credited_id, creation_date) " +
-                     "VALUES (?, ?::uuid, ?::uuid, ?, ?::payment_mode, ?::uuid, ?)";
+        String sql = "INSERT INTO collectivity_transaction (id, collectivity_id, member_debited_id, amount, payment_mode, account_credited_id, creation_date) "
+                +
+                "VALUES (?, ?::uuid, ?::uuid, ?, ?::payment_mode, ?::uuid, ?)";
         try (Connection conn = dbConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
             transaction.setId(UUID.randomUUID().toString());
             pstmt.setString(1, transaction.getId());
             pstmt.setString(2, transaction.getCollectivityId());
@@ -38,16 +39,18 @@ public class CollectivityTransactionRepository {
         }
     }
 
-    public List<CollectivityTransactionEntity> findByCollectivityIdAndPeriod(String collectivityId, LocalDate from, LocalDate to) {
+    public List<CollectivityTransactionEntity> findByCollectivityIdAndPeriod(String collectivityId, LocalDate from,
+            LocalDate to) {
         List<CollectivityTransactionEntity> list = new ArrayList<>();
         String sql = "SELECT * FROM collectivity_transaction WHERE collectivity_id = ?::uuid AND creation_date BETWEEN ? AND ?";
         try (Connection conn = dbConnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, collectivityId);
             pstmt.setDate(2, Date.valueOf(from));
             pstmt.setDate(3, Date.valueOf(to));
             try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) list.add(mapRow(rs));
+                while (rs.next())
+                    list.add(mapRow(rs));
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error finding transactions: " + e.getMessage());
@@ -65,5 +68,22 @@ public class CollectivityTransactionRepository {
         t.setAccountCreditedId(rs.getString("account_credited_id"));
         t.setCreationDate(rs.getDate("creation_date").toLocalDate());
         return t;
+    }
+
+    public Double sumAmountByAccountAfterDate(String accountId, LocalDate afterDate) {
+        String sql = "SELECT SUM(amount) FROM collectivity_transaction WHERE account_credited_id = ?::uuid AND creation_date > ?";
+        try (Connection conn = dbConnection.getConnection();
+                PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, accountId);
+            pstmt.setDate(2, Date.valueOf(afterDate));
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble(1);
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error summing transactions: " + e.getMessage());
+        }
+        return 0.0;
     }
 }
