@@ -49,4 +49,15 @@ public class CollectivityController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to) {
         return financeService.getTransactions(id, from, to);
     }
+    @GetMapping("/{id}")
+    public CollectivityResponse getCollectivityById(@PathVariable String id) {
+        return collectivityService.getCollectivityById(id);
+    }
+
+    @GetMapping("/{id}/financialAccounts")
+    public List<FinancialAccountResponse> getFinancialAccounts(
+            @PathVariable String id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate at) {
+        return financeService.getFinancialAccountsAtDate(id, at);
+    }
 }
