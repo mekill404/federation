@@ -11,6 +11,8 @@ import com.alpha.federation.model.enums.ActivityStatus;
 import com.alpha.federation.repository.*;
 import com.alpha.federation.mapper.MemberMapper;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -32,17 +34,21 @@ public class FinanceService {
 
     public List<MemberPaymentResponse> addPayments(String memberId, List<CreateMemberPaymentRequest> requests) {
         MemberEntity member = memberRepository.findById(memberId);
-        if (member == null) throw new NotFoundException("Member not found");
+        if (member == null)
+            throw new NotFoundException("Member not found");
 
         String collectivityId = collectivityRepository.findCollectivityIdByMemberId(memberId);
-        if (collectivityId == null) throw new NotFoundException("Member not linked to any collectivity");
+        if (collectivityId == null)
+            throw new NotFoundException("Member not linked to any collectivity");
 
         List<MemberPaymentResponse> responses = new ArrayList<>();
 
         for (CreateMemberPaymentRequest req : requests) {
             FinancialAccountEntity account = financialAccountRepository.findById(req.getAccountCreditedIdentifier());
-            if (account == null) throw new NotFoundException("Financial account not found");
-            if (req.getAmount() <= 0) throw new BadRequestException("Amount must be positive");
+            if (account == null)
+                throw new NotFoundException("Financial account not found");
+            if (req.getAmount() <= 0)
+                throw new BadRequestException("Amount must be positive");
 
             if (req.getMembershipFeeIdentifier() != null) {
                 if (membershipFeeRepository.findById(req.getMembershipFeeIdentifier()) == null) {
@@ -86,14 +92,16 @@ public class FinanceService {
                 .collect(Collectors.toList());
     }
 
-    public List<MembershipFeeResponse> createMembershipFees(String collectivityId, List<CreateMembershipFeeRequest> requests) {
+    public List<MembershipFeeResponse> createMembershipFees(String collectivityId,
+            List<CreateMembershipFeeRequest> requests) {
         if (collectivityRepository.findById(collectivityId) == null)
             throw new NotFoundException("Collectivity not found");
 
         List<MembershipFeeResponse> responses = new ArrayList<>();
         for (CreateMembershipFeeRequest req : requests) {
-            if (req.getAmount() <= 0) throw new BadRequestException("Amount must be positive");
-            
+            if (req.getAmount() <= 0)
+                throw new BadRequestException("Amount must be positive");
+
             MembershipFeeEntity fee = new MembershipFeeEntity();
             fee.setCollectivityId(collectivityId);
             fee.setLabel(req.getLabel());
@@ -101,7 +109,7 @@ public class FinanceService {
             fee.setFrequency(req.getFrequency());
             fee.setEligibleFrom(req.getEligibleFrom());
             fee.setStatus(ActivityStatus.ACTIVE);
-            
+
             membershipFeeRepository.save(fee);
             responses.add(mapToMembershipFeeResponse(fee));
         }
@@ -111,7 +119,8 @@ public class FinanceService {
     public List<CollectivityTransactionResponse> getTransactions(String collectivityId, LocalDate from, LocalDate to) {
         if (collectivityRepository.findById(collectivityId) == null)
             throw new NotFoundException("Collectivity not found");
-        if (from.isAfter(to)) throw new BadRequestException("'from' date must be before 'to' date");
+        if (from.isAfter(to))
+            throw new BadRequestException("'from' date must be before 'to' date");
 
         return transactionRepository.findByCollectivityIdAndPeriod(collectivityId, from, to).stream()
                 .map(t -> {
@@ -120,13 +129,13 @@ public class FinanceService {
                     resp.setCreationDate(t.getCreationDate());
                     resp.setAmount(t.getAmount());
                     resp.setPaymentMode(t.getPaymentMode());
-                    
+
                     FinancialAccountEntity acc = financialAccountRepository.findById(t.getAccountCreditedId());
                     resp.setAccountCredited(mapFinancialAccountToResponse(acc));
-                    
+
                     MemberEntity member = memberRepository.findById(t.getMemberDebitedId());
                     resp.setMemberDebited(memberMapper.toResponse(member));
-                    
+
                     return resp;
                 })
                 .collect(Collectors.toList());
@@ -154,7 +163,8 @@ public class FinanceService {
     }
 
     private FinancialAccountResponse mapFinancialAccountToResponse(FinancialAccountEntity entity) {
-        if (entity == null) return null;
+        if (entity == null)
+            return null;
 
         if (entity.getAccountType() == AccountType.CASH) {
             CashAccountResponse cash = new CashAccountResponse();
@@ -176,10 +186,35 @@ public class FinanceService {
             bank.setHolderName(entity.getHolderName());
             bank.setBankName(entity.getBankName());
             bank.setBankCode(entity.getBankCode() != null ? Integer.parseInt(entity.getBankCode()) : 0);
-            bank.setBankBranchCode(entity.getBankBranchCode() != null ? Integer.parseInt(entity.getBankBranchCode()) : 0);
-            bank.setBankAccountNumber(entity.getBankAccountNumber() != null ? Integer.parseInt(entity.getBankAccountNumber()) : 0);
-            bank.setBankAccountKey(entity.getBankAccountKey() != null ? Integer.parseInt(entity.getBankAccountKey()) : 0);
+            bank.setBankBranchCode(
+                    entity.getBankBranchCode() != null ? Integer.parseInt(entity.getBankBranchCode()) : 0);
+            bank.setBankAccountNumber(
+                    entity.getBankAccountNumber() != null ? Integer.parseInt(entity.getBankAccountNumber()) : 0);
+            bank.setBankAccountKey(
+                    entity.getBankAccountKey() != null ? Integer.parseInt(entity.getBankAccountKey()) : 0);
             return bank;
         }
     }
+
+    public List<FinancialAccountResponse> getFinancialAccountsAtDate(String collectivityId, LocalDate at) {
+        if (collectivityRepository.findById(collectivityId) == null) {
+            throw new NotFoundException("Collectivity not found");
+        }
+
+        List<FinancialAccountEntity> accounts = financialAccountRepository.findByCollectivityId(collectivityId);
+        List<FinancialAccountResponse> responses = new ArrayList<>();
+
+        for (FinancialAccountEntity account : accounts) {
+            Double totalAfter = transactionRepository.sumAmountByAccountAfterDate(account.getId(), at);
+            double balanceAtDate = account.getAmount() - (totalAfter != null ? totalAfter : 0.0);
+
+            FinancialAccountEntity adjustedAccount = new FinancialAccountEntity();
+            BeanUtils.copyProperties(account, adjustedAccount);
+            adjustedAccount.setAmount(balanceAtDate);
+
+            responses.add(mapFinancialAccountToResponse(adjustedAccount));
+        }
+        return responses;
+    }
+
 }
